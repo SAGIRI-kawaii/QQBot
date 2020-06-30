@@ -17,7 +17,7 @@ settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"n
 
 # 初始化city列表
 city=[]
-conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
 cur = conn.cursor()
 sql = "select cityZh from city"
 cur.execute(sql) 
@@ -32,7 +32,7 @@ def record(operation,picUrl,sender,groupId,result,operationType):
     responseCalled+=1
     timeNow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(timeNow)
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     if operationType=='img':
         sql = "INSERT INTO imgCalled (time,operation,picUrl,sender,groupId,result) VALUES ('%s','%s','%s',%d,%d,%d)"%(timeNow,operation,pymysql.escape_string(picUrl),sender,groupId,result)
@@ -46,7 +46,7 @@ def record(operation,picUrl,sender,groupId,result,operationType):
 
 # 数据更新
 def updateData(data,operationType):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     if operationType=='setu':
         sql = "UPDATE calledCount SET setuCalled=%d"%data
@@ -74,7 +74,7 @@ def updateData(data,operationType):
 
 # 检查有无群组变更(初始化)
 def checkGroupInit(groupList):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select groupId from setting"
     cur.execute(sql) 
@@ -97,7 +97,7 @@ def checkGroupInit(groupList):
 
 # 获取调用次数数据
 def getData(data):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT %s from calledCount"%data
     cur.execute(sql) 
@@ -111,7 +111,7 @@ def getSetting(groupId,name):
     sqlKeyWord=["repeat","real","limit"]
     if name in sqlKeyWord:
         name='`'+name+'`'
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT %s from setting WHERE groupId=%d"%(name,groupId)
     # print(sql)
@@ -125,7 +125,7 @@ def getSetting(groupId,name):
 def updateSetting(groupId,name,new):
     strKeyWord=["speakMode","switch"]
     sqlKeyWord=["repeat","real","limit"]
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     if name in sqlKeyWord:
         name='`'+name+'`'
@@ -140,7 +140,7 @@ def updateSetting(groupId,name,new):
 
 # 获取本群管理员
 def getAdmin(groupId):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT adminId from admin WHERE groupId=%d"%groupId
     cur.execute(sql) 
@@ -152,7 +152,7 @@ def getAdmin(groupId):
 
 # 是否要搜图
 def getSearchReady(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from searchReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -169,7 +169,7 @@ def getSearchReady(groupId,sender):
 
 # 修改搜图判断状态
 def setSearchReady(groupId,sender,status):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from searchReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -455,7 +455,7 @@ def showClock(sender):
 
 # 记录表盘选择
 def recordClock(groupId,sender,choice):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT choice from clockChoice WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
