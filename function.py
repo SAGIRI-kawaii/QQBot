@@ -11,13 +11,13 @@ import pymysql
 from itertools import chain
 import wmi
 
-BotQQ = 762802224 # 字段 qq 的值
-HostQQ = 1900384123 #主人QQ
+BotQQ =  # 字段 qq 的值
+HostQQ =  #主人QQ
 settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","online":"online","offline":"offline"}
 
 # 初始化city列表
 city=[]
-conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+conn = pymysql.connect(host='127.0.0.1', user = "", passwd="", db="", port=3306, charset="utf8")
 cur = conn.cursor()
 sql = "select cityZh from city"
 cur.execute(sql) 
