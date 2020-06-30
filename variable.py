@@ -3,53 +3,24 @@ from mirai import Mirai
 import datetime
 import time
 
-memberSetuNet={}         #每个群每个成员要的网络setu计数（限制每人五张）
-memberSetuFobidden={}       #每个群被禁止要setu的成员id
-memberPicCount={}           #每个群成员要setu/real的次数
-group_repeat={}             #每个群判断是否复读的dict
-group_repeat_switch={}      #每个群的复读开关
-timeDisable={}              #关闭setu开关的时间
-searchReady={}              #接下来要进行搜图的id
-pmlimit={}                  #setu/real限制每分钟张数人员记录
-limitQuantity={}            #各群限制setu/real每分钟张数
-
-
 localtime = time.localtime(time.time())
 day_set=localtime.tm_mday
 
-setuCount=0         #网络setu编号
-count=0             #setu保存编号
-bizhiCount=0        #网络壁纸编号
-setuCalled=0        #响应setu请求次数
-bizhiCalled=0       #响应壁纸请求次数
-weatherCalled=0     #响应天气请求次数
-realCalled=0        #响应real请求次数
-responseCalled=0    #响应请求次数
 dragonId=[]         #龙王id（可能有多个）
 dragon={}           #各群今日是否已宣布龙王
-groupR18={}         #各群组r18开关
-management={}       #拥有管理权限的用户id
-searchCount=0       #搜图编号
-city=[]             #全国城市（地区）列表
 
 n_time = datetime.datetime.now()    #目前时间
 start_time = 0    #程序启动时间
 d_time = datetime.datetime.strptime(str(datetime.datetime.now().date())+'23:00', '%Y-%m-%d%H:%M')   #龙王宣布时间
 
-setuForbidden=[753400372,757627813]         #禁止要setu的群
-realForbidden=[753400372,757627813]         #禁止要real的群
-bizhiForbidden=[753400372,757627813]        #禁止要bizhi的群
-forbiddenCount={}                           #禁止要setu后要setu的次数
-
-
-setuSrc="https://api.lolicon.app/setu/?apikey=804820105eafb7bfc772a3"                   #setu api地址
-bizhiSrc="http://api.mtyqx.cn/api/random.php"                                           #壁纸api地址
-zuanHighSrc="https://nmsl.shadiao.app/api.php?from=SagiriBot"                           #祖安（High）api地址
-zuanLowSrc="https://nmsl.shadiao.app/api.php?level=min&from=SagiriBot"                  #祖安（Low）api地址
-rainbowSrc="https://chp.shadiao.app/api.php?from=SagiriBot"                             #彩虹屁api地址
+setuSrc=""                   #setu api地址
+bizhiSrc=""                                           #壁纸api地址
+zuanHighSrc=""                           #祖安（High）api地址
+zuanLowSrc=""                  #祖安（Low）api地址
+rainbowSrc=""                             #彩虹屁api地址
 searchSrc="https://saucenao.com/"                                                       #搜图网址
-translateSrc="https://translate.google.cn/#view=home&op=translate&sl=auto&tl="          #翻译地址
-weatherSrc="https://www.tianqiapi.com/free/day?appid=51475357&appsecret=Y56ID6xP&city=" #天气api地址
+translateSrc=""          #翻译地址
+weatherSrc="" #天气api地址
 
 weatherCalledDist="S:\MiRai_QQRobot\info\weather.txt"           #天气调用数据存储路径
 setuCalledDist="S:\MiRai_QQRobot\info\setu.txt"                 #setu调用数据存储路径
@@ -79,9 +50,9 @@ non_reply=["setu","bizhi","","别老摸了，给爷冲！","real","几点了","�
 setuCallText=["[Image::A3C91AFE-8834-1A67-DA08-899742AEA4E5]","[Image::A0FE77EE-1F89-BE0E-8E2D-62BCD1CAB312]","[Image::04923170-2ACB-5E94-ECCD-953F46E6CAB9]","[Image::3FFFE3B5-2E5F-7307-31A4-2C7FFD2F395F]","[Image::8A3450C7-0A98-4E81-FA24-4A0342198221]","setu","车车","开车","来点色图","来点儿车车"]
 searchCallText=["search","搜图"]
 timeCallText=["几点啦","几点了","几点啦？","几点了？","time"]
-setuBot=[1702485633,1816899243,656162369,1553136451,3371686746,1823535226,3028799143,1739014771,2498853789]
+setuBot=[]
 setuGroup=[]
-repeatBot=[2858306369]
+repeatBot=[]
 
 command="""command:
     打开setu开关:
