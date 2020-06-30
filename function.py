@@ -11,13 +11,13 @@ import pymysql
 from itertools import chain
 import wmi
 
-BotQQ =  # 字段 qq 的值
-HostQQ =  #主人QQ
+BotQQ = 762802224 # 字段 qq 的值
+HostQQ = 1900384123 #主人QQ
 settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","online":"online","offline":"offline"}
 
 # 初始化city列表
 city=[]
-conn = pymysql.connect(host='127.0.0.1', user = "", passwd="", db="", port=3306, charset="utf8")
+conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
 cur = conn.cursor()
 sql = "select cityZh from city"
 cur.execute(sql) 
@@ -114,7 +114,7 @@ def getSetting(groupId,name):
     conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT %s from setting WHERE groupId=%d"%(name,groupId)
-    print(sql)
+    # print(sql)
     cur.execute(sql) 
     data=cur.fetchone()[0]
     cur.close()
@@ -123,9 +123,16 @@ def getSetting(groupId,name):
 
 # 更新本群设置
 def updateSetting(groupId,name,new):
+    strKeyWord=["speakMode","switch"]
+    sqlKeyWord=["repeat","real","limit"]
     conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
-    sql = "UPDATE setting SET %s=%s WHERE groupId=%d"%(name,new,groupId)
+    if name in sqlKeyWord:
+        name='`'+name+'`'
+    if name in strKeyWord:
+        sql = "UPDATE setting SET %s='%s' WHERE groupId=%d"%(name,new,groupId)
+    else:
+        sql = "UPDATE setting SET %s=%s WHERE groupId=%d"%(name,new,groupId)
     cur.execute(sql) 
     cur.close()
     conn.commit()
@@ -616,13 +623,20 @@ def getMemberPicStatus(groupId,sender):
         elif int(data)<limit and (datetime.datetime.now()-time).seconds<60:
             sql = "update memberPicCount set count=%d where groupId=%d and memberId=%d"%(int(data)+1,groupId,sender)
         elif (datetime.datetime.now()-time).seconds>60:
-            sql = "update memberPicCount set count=1,`time`='%s' where groupId=%d and memberId=%d"%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),groupId,sender)
+            sql = "update memberPicCount set count=1,`time`='%s' where groupId=%d and memberId=%d"%(datetime.datetime.now(),groupId,sender)
         cur.execute(sql) 
     else:
-        sql = "insert memberPicCount set groupId=%d,memberId=%d,time='%s',count=1"%(groupId,sender,datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        sql = "insert memberPicCount set groupId=%d,memberId=%d,time='%s',count=1"%(groupId,sender,datetime.datetime.now())
         cur.execute(sql) 
         
     cur.close()
     conn.commit()
     conn.close()
     return True
+
+# qq号转名字
+def qq2name(memberList,qq):
+    for i in memberList:
+        if i.id==qq:
+            return i.memberName
+    return "qq2Name::Error"

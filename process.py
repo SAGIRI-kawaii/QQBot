@@ -5,13 +5,6 @@ import datetime
 import re
 import requests
 
-setuCalled=getData("setuCalled")            #响应setu请求次数
-bizhiCalled=getData("bizhiCalled")          #响应壁纸请求次数
-weatherCalled=getData("weatherCalled")      #响应天气请求次数
-realCalled=getData("realCalled")            #响应real请求次数
-responseCalled=getData("responseCalled")    #响应请求次数
-clockCalled=getData("clockCalled")          #响应time次数
-
 adminConfig=["repeat","setu","bizhi","real"]
 adminCheck=["group","speakMode","countLimit","setu","bizhi","real","r18"]
 hostConfig=["countLimit","r18","speakMode","switch"]
@@ -34,6 +27,8 @@ def settingProcess(groupId,sender,config,change):
                 else:
                     updateSetting(groupId,config,settingCode[change])
                     record("setting:%s set to %s"%(config,change),"none",sender,groupId,True,"function")
+            if (config=="real" or config=="setu") and change=="Enable" and (getSetting(groupId,"setu") and getSetting(groupId,"real")):
+                updateSetting(groupId,"forbiddenCount",0)
         else:
             record("setting:command error","none",sender,groupId,False,"function")
             return [
@@ -77,15 +72,9 @@ def infoProcess(groupId,sender,check):
         ]
 
 #语句处理
-def Process(message,groupId,sender):
-    #全局参数声明
-    global setuCalled
-    global realCalled
-    global bizhiCalled
-    global weatherCalled
-    global responseCalled
-    global clockCalled
+async def Process(message,groupId,sender):
 
+    responseCalled=getData("responseCalled")
     responseCalled+=1                               #responseCalled计数
     updateData(responseCalled,"response")
 
@@ -94,10 +83,13 @@ def Process(message,groupId,sender):
 
     #setu功能
     if messageText in setuCallText:
+        setuCalled=getData("setuCalled")
         setuCalled+=1                               #setuCalled计数  
         updateData(setuCalled,"setu")
-        if groupId in setuForbidden:                    #本群禁止要setu
-            forbiddenCount[groupId]+=1
+        if not getSetting(groupId,"setu"):                    #本群禁止要setu
+            forbiddenCount=getSetting(groupId,"forbiddenCount")
+            forbiddenCount+=1
+            updateSetting(groupId,"forbiddenCount",forbiddenCount)
             record("setu","none",sender,groupId,False,"img")
             if forbiddenCount<=3:
                 return [Plain(text="我们是正规群呐，不搞那一套哦，想看去辣种群看哟~")]
@@ -134,17 +126,15 @@ def Process(message,groupId,sender):
 
     #real功能
     elif messageText=="real":
+        realCalled=getData("realCalled")
         realCalled+=1                                   #realCalled计数  
         updateData(realCalled,"real")
 
-        if sender not in memberPicCount[groupId]:      #成员要图次数计数
-            memberPicCount[groupId][sender]=1
-        else:
-            memberPicCount[groupId][sender]+=1
-
-        if groupId in realForbidden:                    #本群禁止要real
-            forbiddenCount[groupId]+=1
-            record("real",dist,sender,groupId,False,"img")
+        if not getSetting(groupId,"real"):                    #本群禁止要real
+            forbiddenCount=getSetting(groupId,"forbiddenCount")
+            forbiddenCount+=1
+            updateSetting(groupId,"forbiddenCount",forbiddenCount)
+            record("real","none",sender,groupId,False,"img")
             if forbiddenCount<=3:
                 return [Plain(text="我们是正规群呐，不搞那一套哦，想看去辣种群看哟~")]
             elif forbiddenCount<=6:
@@ -158,20 +148,11 @@ def Process(message,groupId,sender):
                 record("real",dist,sender,groupId,False,"img")
                 return [Plain(text="要要要你🐎？大胆妖孽！我一眼就看出来你不是人！大威天龙！世尊地藏！般若诸佛！般若巴麻空！")]
             
-            if setting[groupId]["countLimit"]:                   #如果有每分钟调用次数限制
-                if sender not in pmlimit[groupId]:
-                    pmlimit[groupId][sender]={}
-                    pmlimit[groupId][sender]["time"]=datetime.datetime.now()
-                    pmlimit[groupId][sender]["count"]=1
-                else:
-                    if (datetime.datetime.now()-pmlimit[groupId][sender]["time"]).seconds<60 and pmlimit[groupId][sender]["count"]>=limitQuantity[groupId]:
-                        record("real",dist,sender,groupId,False,"img")
-                        return [Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%limitQuantity[groupId])]
-                    elif (datetime.datetime.now()-pmlimit[groupId][sender]["time"]).seconds>60:
-                        pmlimit[groupId][sender]["time"]=datetime.datetime.now()
-                        pmlimit[groupId][sender]["count"]=1
-                    elif (datetime.datetime.now()-pmlimit[groupId][sender]["time"]).seconds<60 and pmlimit[groupId][sender]["count"]<limitQuantity[groupId]:
-                        pmlimit[groupId][sender]["count"]+=1
+            if getSetting(groupId,"countLimit"):                   #如果有每分钟调用次数限制
+                if not getMemberPicStatus(groupId,sender):
+                    record("real","none",sender,groupId,False,"img")
+                    return [Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))]
+
             dist=randomPic(realDist)
             record("real",dist,sender,groupId,True,"img")
             print("本地real图片地址：",dist)
@@ -179,12 +160,12 @@ def Process(message,groupId,sender):
             
     #bizhi功能
     elif messageText=="bizhi":
+        bizhiCalled=getData("bizhiCalled")
         bizhiCalled+=1                                  #bizhiCalled计数  
         updateData(bizhiCalled,"bizhi")
 
-        if groupId in bizhiForbidden:                    #本群禁止要bizhi
-            forbiddenCount[groupId]+=1
-            record("bizhi",dist,sender,groupId,False,"img")
+        if not getSetting(groupId,"bizhi"):                    #本群禁止要bizhi
+            record("bizhi","none",sender,groupId,False,"img")
             return [Plain(text="bizhi功能被关闭了呐>^<,想打开的话联系下管理员呐~")]
         else:
             if sender in blackList:                     #发送人在黑名单中
@@ -200,16 +181,17 @@ def Process(message,groupId,sender):
         aim=messageText[:4]
         if aim=="setu":
             aimDist=setuDist
-            aimCalledDist=setuCalledDist
         else:
             aimDist=realDist
-            aimCalledDist=realCalledDist
-        if groupId in setuForbidden:                    #本群禁止要setu
-            forbiddenCount[groupId]+=1
+        if not ((getSetting(groupId,"setu") and aim=="setu") or (getSetting(groupId,"real") and aim=="real")):                    #本群禁止要setu
+            forbiddenCount=getSetting(groupId,"forbiddenCount")
+            forbiddenCount+=1
+            updateSetting(groupId,"forbiddenCount",forbiddenCount)
+            record(messageText,"none",sender,groupId,False,"img")
             if forbiddenCount<=3:
-                return [Plain(text="我们是正规群呐，不搞setu那一套哦，想看setu去setu群哒~")]
+                return [Plain(text="我们是正规群呐，不搞那一套哦，想看去辣种群看哟~")]
             elif forbiddenCount<=6:
-                return [Plain(text="Kora!都说了是正规群啦！怎么老要setu，真是够讨厌的呢！再问我就生气啦！")]
+                return [Plain(text="Kora!都说了是正规群啦！怎么老要这种东西呀，真是够讨厌的呢！再问我就生气啦！")]
             elif forbiddenCount<=9:
                 return [Plain(text="爬爬爬，天天脑子里都是些什么玩意儿，滚呐！爷生气啦！打你哦！")]
             else:
@@ -218,9 +200,11 @@ def Process(message,groupId,sender):
             try:
                 num=int(message.toString()[5:])
                 if aim=="setu":
+                    setuCalled=getData("setuCalled")
                     setuCalled+=num
                     updateData(setuCalled,"setu")
                 else:
+                    realCalled=getData("realCalled")
                     realCalled+=num
                     updateData(realCalled,"real")
                 if sender in getAdmin(groupId):
@@ -241,7 +225,7 @@ def Process(message,groupId,sender):
                     record("%s*%d"%(aim,num),"none",sender,groupId,False,"img")
                     return [Plain(text="只有主人和管理员可以使用%s*num命令哦~你没有权限的呐~"%aim)]
                 else:
-                    record("%s*%d"%(aim,num),dist,sender,groupId,False,"img")
+                    record("%s*%d"%(aim,num),"none",sender,groupId,False,"img")
                     return [Plain(text="老色批，要那么多，给你🐎一拳，爬！")]
             except ValueError:
                 return [Plain(text="命令错误！%s*后必须跟数字！"%aim)]
@@ -257,6 +241,7 @@ def Process(message,groupId,sender):
     
     #获取时间功能（可选背景）
     elif messageText in timeCallText:
+        clockCalled=getData("clockCalled")
         clockCalled+=1
         updateData(clockCalled,"clock")
         if getClockChoice(groupId,sender)=="none":
@@ -302,6 +287,7 @@ def Process(message,groupId,sender):
 
     #天气查询功能
     elif "[At::target=%i] 天气"%BotQQ in messageText:
+        weatherCalled=getData("weatherCalled")
         weatherCalled+=1
         updateData(weatherCalled,"weather")
         return getWeather(message,sender)
@@ -327,7 +313,7 @@ def Process(message,groupId,sender):
             name,config,change=command.split('.')
             print(name,'-->'," config:",config,"set to",change)
             return settingProcess(groupId,sender,config,change)
-        except:
+        except ValueError:
             return [
                 At(target=sender),
                 Plain(text="Command error! Use the '@bot command' command to query the commands you can use!")
@@ -354,7 +340,7 @@ def Process(message,groupId,sender):
                 Plain(text="诶嘿嘿，老公@我是要找人家玩嘛~纱雾这就来找你玩哟~")
             ]
         else:
-            mode_now=getData("speakMode")
+            mode_now=getSetting(groupId,"speakMode")
             if not mode_now=="normal":
                 # text="@我是要干什么呢？可以通过 @我+menu/command/info/mode 的方式查询信息哟~"
                 if mode_now=="zuanHigh":
