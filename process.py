@@ -1,14 +1,21 @@
+#coding=utf-8
 from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage
-# from variable import *
+from variable import *
 from function import *
 import datetime
 import re
 import requests
+import json
+from VGG16 import predictImage
 
-adminConfig=["repeat","setu","bizhi","real"]
-adminCheck=["group","speakMode","countLimit","setu","bizhi","real","r18"]
-hostConfig=["countLimit","r18","speakMode","switch"]
-settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","online":"online","offline":"offline"}
+adminConfig=["repeat","setu","bizhi","real","speakMode","search"]
+adminCheck=["group","speakMode","countLimit","setu","bizhi","real","r18","search"]
+hostConfig=["countLimit","r18","switch"]
+settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline"}
+sleepMuteCallText=["精致睡眠","晚安","晚安，精致睡眠"]
+muteAllCallText=["万籁俱寂"]
+unmuteAllCallText=["春回大地","万物复苏"]
+blackList=[]
 
 # setting语句处理
 def settingProcess(groupId,sender,config,change):
@@ -25,7 +32,10 @@ def settingProcess(groupId,sender,config,change):
                         Plain(text="Insufficient permissions!")
                     ]
                 else:
-                    updateSetting(groupId,config,settingCode[change])
+                    if change.isnumeric():
+                        updateSetting(groupId,config,change)
+                    else:
+                        updateSetting(groupId,config,settingCode[change])
                     record("setting:%s set to %s"%(config,change),"none",sender,groupId,True,"function")
             if (config=="real" or config=="setu") and change=="Enable" and (getSetting(groupId,"setu") and getSetting(groupId,"real")):
                 updateSetting(groupId,"forbiddenCount",0)
@@ -71,6 +81,164 @@ def infoProcess(groupId,sender,check):
             Plain(text="爬爬爬，你没有管理权限！离人家远一点啦！死变态！")
         ]
 
+# Wiki语句处理
+def wikiProcess(groupId,sender,messageText):
+    firstLevelDirectory=["function","management"]
+    secondFLevelDirectory=["img","weather","yxh","blhx","ask","translate","speakMode","mute"]
+    secondMLevelDirectory=["setting","info"]
+    finalFLevelDirectory={"setu":wikiSetu,"real":wikiReal,"bizhi":wikiBizhi,"search":wikiSearch,"predict":wikiPredict,"weather":wikiWeather,"yxh":wikiYxh,"blhx":wikiBlhx,"ask":wikiAsk,"translate":wikiTranslate,"speakMode":wikiSpeakMode,"mute":wikiMute,"linux":wikiLinux} 
+    finalSLevelDirectory={"setuSetting":setuSetting,"r18Setting":r18Setting,"realSetting":realSetting,"bizhiSetting":bizhiSetting,"searchSetting":searchSetting,"countLimitSetting":countLimitSetting,"limitSetting":limitSetting,"blacklistSetting":blacklistSetting,"repeatSetting":repeatSetting,"speakModeSetting":speakModeSetting}
+    finalILevelDirectory={"repeatInfo":repeatInfo,"setuLocalInfo":setuLocalInfo,"bizhiLocalInfo":bizhiLocalInfo,"countLimitInfo":countLimitInfo,"setuInfo":setuInfo,"bizhiInfo":bizhiInfo,"realInfo":realInfo,"r18Info":r18Info,"speakModeInfo":speakModeInfo,"switchInfo":switchInfo,"allInfo":allInfo,"sysInfo":sysInfo,"groupInfo":groupInfo}
+    print(messageText)
+    if messageText.replace("[At::target=%i] "%BotQQ,"")=="wiki" or messageText.replace("[At::target=%i] "%BotQQ,"")=="wiki:wiki":
+        return [
+            At(target=sender),
+            Plain(text="Wiki 下属目录：\n"),
+            Plain(text="1.function\n"),
+            Plain(text="2.management\n"),
+            Plain(text="3.acknowledgement\n"),
+            Plain(text="4.requirements\n"),
+            Plain(text="使用方法：@bot wiki:name\n"),
+            Plain(text="如：@bot wiki:function\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="function":
+        nextMenu=messageText.replace("[At::target=%i] wiki:"%BotQQ,"")
+        return [
+            At(target=sender),
+            Plain(text="function 下属目录：\n"),
+            Plain(text="1.img(图片功能)\n"),
+            Plain(text="2.development(开发相关功能)\n"),
+            Plain(text="3.weather(天气功能)\n"),
+            Plain(text="4.yxh(营销号生成器功能)\n"),
+            Plain(text="5.blhx(blhxWiki查询功能)\n"),
+            Plain(text="6.ask(问我问题给出网址解答)\n"),
+            Plain(text="7.translate(翻译)\n"),
+            Plain(text="8.speakMode(不同回复模式)\n"),
+            Plain(text="9.mute(有关禁言的功能)\n"),
+            Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
+            Plain(text="如：@bot wiki:img\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="img":
+        return [
+            At(target=sender),
+            Plain(text="img 下属目录：\n"),
+            Plain(text="1.setu(涩图功能)\n"),
+            Plain(text="2.real(三次元涩图功能)\n"),
+            Plain(text="3.bizhi(壁纸功能)\n"),
+            Plain(text="4.search(搜图查询功能)\n"),
+            Plain(text="5.predict(搜图查询功能)\n"),
+            Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
+            Plain(text="如：@bot wiki:img\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="development":
+        return [
+            At(target=sender),
+            Plain(text="development 下属目录：\n"),
+            Plain(text="1.linux(linux命令查询功能)\n"),
+            Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
+            Plain(text="如：@bot wiki:linux\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="management":
+        return [
+            At(target=sender),
+            Plain(text="management 下属目录：\n"),
+            Plain(text="1.setting(设置)\n"),
+            Plain(text="2.info(查询)\n"),
+            Plain(text="3.wiki(使用方法(开始套娃))\n"),
+            Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
+            Plain(text="如：@bot wiki:setting\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="setting":
+        return [
+            At(target=sender),
+            Plain(text="setting 下属目录：\n"),
+            Plain(text="1.imgSetting(图片功能设置)\n"),
+            Plain(text="2.blacklist(添加黑名单)\n"),
+            Plain(text="3.repeatSetting(复读设置)\n"),
+            Plain(text="4.speakModeSetting(不同回复模式设置)\n"),
+            Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
+            Plain(text="如：@bot wiki:imgSetting\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="imgSetting":
+        return [
+            At(target=sender),
+            Plain(text="imgSetting 下属目录：\n"),
+            Plain(text="1.setuSetting(涩图功能设置)\n"),
+            Plain(text="2.realSetting(三次元涩图功能设置)\n"),
+            Plain(text="3.bizhiSetting(壁纸功能设置)\n"),
+            Plain(text="4.r18Setting(R18设置)\n"),
+            Plain(text="5.searchSetting(搜图功能设置)\n"),
+            Plain(text="6.countLimitSetting(限制要图次数(pis/m)功能开关设置)\n"),
+            Plain(text="7.limitSetting(限制要图次数(pis/m)功能设置)\n"),
+            Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
+            Plain(text="如：@bot wiki:setuSetting\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="info":
+        return [
+            At(target=sender),
+            Plain(text="info 下属目录：\n"),
+            Plain(text="1.allInfo(全部信息)\n"),
+            Plain(text="2.groupInfo(群组设置等信息)\n"),
+            Plain(text="3.sysInfo(系统信息)\n"),
+            Plain(text="4.imgInfo(图片功能设置信息)\n"),
+            Plain(text="5.repeatInfo(复读功能设置信息)\n"),
+            Plain(text="6.speakModeInfo(聊天模式设置信息)\n"),
+            Plain(text="7.switchInfo(机器人开关信息)\n"),
+            Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
+            Plain(text="如：@bot wiki:all\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="imgInfo":
+        return [
+            At(target=sender),
+            Plain(text="imgInfo 下属目录：\n"),
+            Plain(text="1.setuInfo(setu设置信息)\n"),
+            Plain(text="2.realInfo(real设置信息)\n"),
+            Plain(text="3.r18Info(r18设置信息)\n"),
+            Plain(text="4.bizhiInfo(bizhi设置信息)\n"),
+            Plain(text="5.searchInfo(搜图功能设置信息)\n"),
+            Plain(text="6.predictInfo(预测图片功能设置信息)\n"),
+            Plain(text="7.setuLocalInfo(setu库位置设置信息)\n"),
+            Plain(text="8.bizhiLocalInfo(bizhi库位置设置信息)\n"),
+            Plain(text="9.countLimitInfo(每分钟要图限制设置信息)\n"),
+            Plain(text="10.limitInfo(每分钟要图数量限制设置信息)\n"),
+            Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
+            Plain(text="如：@bot wiki:setuInfo\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="acknowledgement":
+        nextMenu=messageText.replace("[At::target=%i] wiki:"%BotQQ,"")
+        return [
+            At(target=sender),
+            Plain(text="致谢名单:\n"),
+            Plain(text="1.Mirai,一个高效率机器人库\n"),
+            Plain(text="2.mirai-api-http,提供 http 接口进行接入\n"),
+            Plain(text="3.python-mirai,Mirai的Python接口\n")
+        ]
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="requirements":
+        nextMenu=messageText.replace("[At::target=%i] wiki:"%BotQQ,"")
+        answer=requirements
+        answer.insert(0,At(target=sender))
+        return answer
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"") in finalFLevelDirectory:
+        finalKey=messageText.replace("[At::target=%i] wiki:"%BotQQ,"")
+        answer=finalFLevelDirectory[finalKey]
+        answer.insert(0,At(target=sender))
+        return answer
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"") in finalSLevelDirectory:
+        finalKey=messageText.replace("[At::target=%i] wiki:"%BotQQ,"")
+        answer=finalSLevelDirectory[finalKey]
+        answer.insert(0,At(target=sender))
+        return answer
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"") in finalILevelDirectory:
+        finalKey=messageText.replace("[At::target=%i] wiki:"%BotQQ,"")
+        answer=finalILevelDirectory[finalKey]
+        answer.insert(0,At(target=sender))
+        return answer
+    else:
+        return [
+            At(target=sender),
+            Plain(text="仔细看看是不是输入错误了呐~")
+        ]
+
 #语句处理
 async def Process(message,groupId,sender):
 
@@ -113,6 +281,9 @@ async def Process(message,groupId,sender):
                     return [Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))]
             
             if getSetting(groupId,"setuLocal"):           #是否为本地库
+                if randomJudge():
+                    record("setu","lightning",sender,groupId,False,"img")
+                    return "lightningPic"
                 if getSetting(groupId,"r18"):
                     dist=randomPic(setu18Dist)
                     record("setu18",dist,sender,groupId,True,"img")
@@ -152,7 +323,9 @@ async def Process(message,groupId,sender):
                 if not getMemberPicStatus(groupId,sender):
                     record("real","none",sender,groupId,False,"img")
                     return [Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))]
-
+            if randomJudge():
+                record("real","lightning",sender,groupId,False,"img")
+                return "lightningPic"
             dist=randomPic(realDist)
             record("real",dist,sender,groupId,True,"img")
             print("本地real图片地址：",dist)
@@ -232,12 +405,37 @@ async def Process(message,groupId,sender):
 
     #搜图功能
     elif messageText in searchCallText:
+        if not getSetting(groupId,"search"):
+            return [
+                At(target=sender),
+                Plain(text="搜图功能关闭了呐~想要打开就联系机器人管理员吧~")
+            ]
         setSearchReady(groupId,sender,True)
-        return [At(target=sender),Plain(text="请发送要搜索的图片呐~")]
-    elif message.hasComponent(Image) and getSearchReady(groupId,sender):
+        return [
+            At(target=sender),
+            Plain(text="请发送要搜索的图片呐~")
+        ]
+    elif message.hasComponent(Image) and getSetting(groupId,"search") and getSearchReady(groupId,sender):
         print("searching")
         img = message.getFirstComponent(Image)
-        return searchImage(groupId,sender,img)
+        return await searchImage(groupId,sender,img)
+        
+    #图片预测功能
+    elif messageText=="这张图里是什么":
+        if not getSetting(groupId,"imgPredict"):
+            return [
+                At(target=sender),
+                Plain(text="图片预测功能关闭了呐~想要打开就联系机器人管理员吧~")
+            ]
+        setPredictReady(groupId,sender,True)
+        return [
+            At(target=sender),
+            Plain(text="请发送要预测的图片呐(推荐真实图片呐)~")
+        ]
+    elif message.hasComponent(Image) and getSetting(groupId,"imgPredict") and getPredictReady(groupId,sender):
+        print("predicting")
+        img = message.getFirstComponent(Image)
+        return await predictImage(groupId,sender,img)
     
     #获取时间功能（可选背景）
     elif messageText in timeCallText:
@@ -301,9 +499,52 @@ async def Process(message,groupId,sender):
     elif "[At::target=%i] 营销号"%BotQQ in messageText:
         _,somebody,something,other_word=messageText.split('、')
         # print(something,somebody,other_word)
-        return [
-            Plain(text=yingxiaohao(somebody,something,other_word))
-        ]
+        return yingxiaohao(somebody,something,other_word)
+
+    # 问你点儿事儿
+    elif "[At::target=%i] 问你点儿事儿："%BotQQ in message.toString():
+        question=message.toString()[30:]
+        question=parse.quote(question)
+        return askSth(sender,question)
+
+    #linux命令查询功能
+    elif "[At::target=%i] linux"%BotQQ in messageText:
+        if '：' in messageText:
+            messageText=messageText.replace('：',':')
+        command=messageText.replace("[At::target=%i] linux:"%BotQQ,"")
+        print("get linux:%s"%command)
+        text=getLinuxExplanation(command)
+        if text=="error!no command!":
+            return [
+                At(target=sender),
+                Plain(text="未搜索到命令%s!请检查拼写！"%command)
+            ]
+        else:
+            return [
+                At(target=sender),
+                Plain(text="%s:%s"%(command,text))
+            ]
+
+    # 翻译功能
+    elif "[At::target=%i] "%BotQQ in messageText and "用" in messageText and "怎么说" in messageText:
+        supportLanguage={"中文":"zh","英文":"en","日文":"jp","韩文":"kr","法文":"fr","西班牙文":"es","意大利文":"it","德文":"de","土耳其文":"tr","俄文":"ru","葡萄牙文":"pt","越南文":"vi","印度尼西亚文":"id","马来西亚文":"ms","泰文":"th"}
+        tp=re.findall(r'\[At::target=1785007019\] (.*?)用(.*?)怎么说',messageText,re.S)[0]
+        text=tp[0]
+        target=tp[1]
+        print("text:%s,target:%s"%(text,target))
+        source=textDetect(text.encode("utf-8"))
+        if target not in supportLanguage.keys():
+            sL=""
+            for i in supportLanguage.keys():
+                sL+=i
+                sL+='、'
+            return [
+                At(target=sender),
+                Plain(text="目前只支持翻译到%s哦~\n要全字匹配哦~看看有没有打错呐~\n翻译格式：text用（目标语言）怎么说"%sL)
+            ]
+        target=supportLanguage[target]
+        # print(target)
+        return translate(groupId,sender,text,source,target)
 
     #设置处理
     elif "[At::target=%i] setting."%BotQQ in messageText:
@@ -327,22 +568,31 @@ async def Process(message,groupId,sender):
         info,check=command.split('.')
         print(info,'-->'," info:",check)
         return infoProcess(groupId,sender,check)
-        # except:
-        #     return [
-        #         At(target=sender),
-        #         Plain(text="Command error! Use the '@bot command' command to query the commands you can use!")
-        #     ]
+
+    #wiki处理
+    elif "[At::target=%i] wiki"%BotQQ in messageText:
+        if '：' in messageText:
+            messageText=messageText.replace('：',':')
+            print(messageText)
+        print("get wiki:%s"%messageText.replace("[At::target=%i] wiki"%BotQQ,""))
+        return wikiProcess(groupId,sender,messageText)
 
     #回复@bot（normal,zuanLow,zuanHigh,rainbow）
     elif "[At::target=%i]"%BotQQ in messageText:
-        if sender == HostQQ:
+        if messageText.replace("[At::target=%d] "%BotQQ,"") in sleepMuteCallText and sender not in getAdmin(groupId):
+            return "goodNight"
+        elif messageText.replace("[At::target=%d] "%BotQQ,"") in muteAllCallText and sender==HostQQ:
+            return "muteAll"
+        elif messageText.replace("[At::target=%d] "%BotQQ,"") in unmuteAllCallText and sender==HostQQ:
+            return "unmuteAll"
+        elif sender == HostQQ and not getSetting(groupId,"speakMode")=="chat":
             return [
+                At(target=sender),
                 Plain(text="诶嘿嘿，老公@我是要找人家玩嘛~纱雾这就来找你玩哟~")
             ]
         else:
             mode_now=getSetting(groupId,"speakMode")
             if not mode_now=="normal":
-                # text="@我是要干什么呢？可以通过 @我+menu/command/info/mode 的方式查询信息哟~"
                 if mode_now=="zuanHigh":
                     text=requests.get(zuanHighSrc).text
                     record("zuanHigh","none",sender,groupId,True,"function")
@@ -352,6 +602,12 @@ async def Process(message,groupId,sender):
                 elif mode_now=="rainbow":
                     text=requests.get(rainbowSrc).text
                     record("rainbow","none",sender,groupId,True,"function")
+                elif mode_now=="chat":
+                    if not len(messageText.replace("[At::target=%i] "%BotQQ,""))==0:
+                        text=getChatText(groupId,sender,str(messageText.replace("[At::target=%i] "%BotQQ,"")))
+                        record("chat","none",sender,groupId,True,"function")
+                    else:
+                        return "noneReply"
                 return [
                     At(target=sender),
                     Plain(text=text)

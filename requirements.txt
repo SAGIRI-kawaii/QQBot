@@ -1,0 +1,12 @@
+PyMySQL==0.9.3
+kuriyama==0.3.6
+Keras==2.3.1
+numpy==1.18.5
+matplotlib==3.2.2
+requests==2.24.0
+nvidia_ml_py3==7.352.0
+WMI==1.5.1
+mirai==0.1.5
+Pillow==7.2.0
+pynvml==8.0.4
+record==3.5
