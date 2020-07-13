@@ -15,7 +15,7 @@ settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"n
 sleepMuteCallText=["精致睡眠","晚安","晚安，精致睡眠"]
 muteAllCallText=["万籁俱寂"]
 unmuteAllCallText=["春回大地","万物复苏"]
-blackList=[2518357362]
+blackList=[]
 
 # setting语句处理
 def settingProcess(groupId,sender,config,change):
