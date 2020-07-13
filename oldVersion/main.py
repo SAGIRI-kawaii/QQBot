@@ -17,8 +17,8 @@ import base64
 # import Arnold
 
 
-BotQQ = 762802224 # 字段 qq 的值
-HostQQ = 1900384123 #主人QQ
+BotQQ =  # 字段 qq 的值
+HostQQ =  #主人QQ
 authKey = '1234567890' # 字段 authKey 的值
 mirai_api_http_locate = 'localhost:8080/' # httpapi所在主机的地址端口,如果 setting.yml 文件里字段 "enableWebsocket" 的值为 "true" 则需要将 "/" 换成 "/ws", 否则将接收不到消息.
 
@@ -54,17 +54,17 @@ n_time = datetime.datetime.now()    #目前时间
 start_time = 0    #程序启动时间
 d_time = datetime.datetime.strptime(str(datetime.datetime.now().date())+'23:00', '%Y-%m-%d%H:%M')   #龙王宣布时间
 
-setu_forbidden=[753400372,757627813]    #禁止要setu的群
+setu_forbidden=[]    #禁止要setu的群
 forbidden_count=0          #禁止要setu后要setu的次数
 
 
-setu_src="https://api.lolicon.app/setu/?apikey=804820105eafb7bfc772a3"      #setu api地址
-bizhi_src="http://api.mtyqx.cn/api/random.php"                              #壁纸api地址
-zuanHigh_src="https://nmsl.shadiao.app/api.php?from=SagiriBot"              #祖安（High）api地址
-zuanLow_src="https://nmsl.shadiao.app/api.php?level=min&from=SagiriBot"     #祖安（Low）api地址
-rainbow_src="https://chp.shadiao.app/api.php?from=SagiriBot"                #彩虹屁api地址
+setu_src=""      #setu api地址
+bizhi_src=""                              #壁纸api地址
+zuanHigh_src=""              #祖安（High）api地址
+zuanLow_src=""     #祖安（Low）api地址
+rainbow_src=""                #彩虹屁api地址
 search_src="https://saucenao.com/"                                          #搜图网址
-translate_src="https://translate.google.cn/#view=home&op=translate&sl=auto&tl="    #翻译地址
+translate_src=""    #翻译地址
 
 weather_info_dist="S:\MiRai_QQRobot\info\weather.txt"   #天气调用数据存储路径
 setu_info_dist="S:\MiRai_QQRobot\info\setu.txt"         #setu调用数据存储路径
@@ -90,9 +90,9 @@ clock_info_dist="S:\MiRai_QQRobot\info\\clockChoice.txt"    #表盘选择数据�
 reply_word=["啧啧啧","确实","giao","？？？","???","芜湖","是谁打断了复读？","是谁打断了复读?","老复读机了","就这","就这？","就这?"]     #复读关键词
 non_reply=["setu","bizhi","","别老摸了，给爷冲！","real","几点了","几点啦","几点啦?","几点了?","冲？","今天我冲不冲？","搜图","search"]      #不复读关键词
 setuCalled=["[Image::A3C91AFE-8834-1A67-DA08-899742AEA4E5]","[Image::A0FE77EE-1F89-BE0E-8E2D-62BCD1CAB312]","[Image::04923170-2ACB-5E94-ECCD-953F46E6CAB9]","[Image::3FFFE3B5-2E5F-7307-31A4-2C7FFD2F395F]","[Image::8A3450C7-0A98-4E81-FA24-4A0342198221]","setu","车车","开车","来点色图","来点儿车车"]
-setuBot=[1702485633,1816899243,656162369,1553136451,3371686746,1823535226,3028799143,1739014771,2498853789,2980708856,2791335940]
+setuBot=[]
 setuGroup=[]
-repeatBot=[2858306369]
+repeatBot=[]
 forbidden=[]
 
 command="""command: 
