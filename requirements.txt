@@ -9,4 +9,3 @@ WMI==1.5.1
 mirai==0.1.5
 Pillow==7.2.0
 pynvml==8.0.4
-record==3.5
