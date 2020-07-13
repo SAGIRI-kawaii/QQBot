@@ -15,7 +15,7 @@ settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"n
 sleepMuteCallText=["精致睡眠","晚安","晚安，精致睡眠"]
 muteAllCallText=["万籁俱寂"]
 unmuteAllCallText=["春回大地","万物复苏"]
-blackList=[]
+blackList=[2518357362]
 
 # setting语句处理
 def settingProcess(groupId,sender,config,change):
@@ -239,17 +239,17 @@ def wikiProcess(groupId,sender,messageText):
             Plain(text="仔细看看是不是输入错误了呐~")
         ]
 
-#语句处理
+# 语句处理
 async def Process(message,groupId,sender):
 
     responseCalled=getData("responseCalled")
     responseCalled+=1                               #responseCalled计数
     updateData(responseCalled,"response")
 
-    #message预处理
+    # message预处理
     messageText=message.toString()
 
-    #setu功能
+    # setu功能
     if messageText in setuCallText:
         setuCalled=getData("setuCalled")
         setuCalled+=1                               #setuCalled计数  
@@ -281,7 +281,7 @@ async def Process(message,groupId,sender):
                     return [Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))]
             
             if getSetting(groupId,"setuLocal"):           #是否为本地库
-                if randomJudge():
+                if getSetting(groupId,"imgLightning") and randomJudge():
                     record("setu","lightning",sender,groupId,False,"img")
                     return "lightningPic"
                 if getSetting(groupId,"r18"):
@@ -295,7 +295,7 @@ async def Process(message,groupId,sender):
             else:
                 pass                                    #因api变动不稳定，暂时不进行编写     
 
-    #real功能
+    # real功能
     elif messageText=="real":
         realCalled=getData("realCalled")
         realCalled+=1                                   #realCalled计数  
@@ -323,7 +323,7 @@ async def Process(message,groupId,sender):
                 if not getMemberPicStatus(groupId,sender):
                     record("real","none",sender,groupId,False,"img")
                     return [Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))]
-            if randomJudge():
+            if getSetting(groupId,"imgLightning") and randomJudge():
                 record("real","lightning",sender,groupId,False,"img")
                 return "lightningPic"
             dist=randomPic(realDist)
@@ -331,7 +331,7 @@ async def Process(message,groupId,sender):
             print("本地real图片地址：",dist)
             return [Image.fromFileSystem(dist)]  
             
-    #bizhi功能
+    # bizhi功能
     elif messageText=="bizhi":
         bizhiCalled=getData("bizhiCalled")
         bizhiCalled+=1                                  #bizhiCalled计数  
@@ -349,7 +349,7 @@ async def Process(message,groupId,sender):
         record("bizhi",dist,sender,groupId,True,"img")
         return [Image.fromFileSystem(dist)]  
     
-    #批量pic功能
+    # 批量pic功能
     elif messageText[:5]=="setu*" or messageText[:5]=="real*":
         aim=messageText[:4]
         if aim=="setu":
@@ -403,7 +403,7 @@ async def Process(message,groupId,sender):
             except ValueError:
                 return [Plain(text="命令错误！%s*后必须跟数字！"%aim)]
 
-    #搜图功能
+    # 搜图功能
     elif messageText in searchCallText:
         if not getSetting(groupId,"search"):
             return [
@@ -418,9 +418,9 @@ async def Process(message,groupId,sender):
     elif message.hasComponent(Image) and getSetting(groupId,"search") and getSearchReady(groupId,sender):
         print("searching")
         img = message.getFirstComponent(Image)
-        return await searchImage(groupId,sender,img)
+        return searchImage(groupId,sender,img)
         
-    #图片预测功能
+    # 图片预测功能
     elif messageText=="这张图里是什么":
         if not getSetting(groupId,"imgPredict"):
             return [
@@ -435,9 +435,34 @@ async def Process(message,groupId,sender):
     elif message.hasComponent(Image) and getSetting(groupId,"imgPredict") and getPredictReady(groupId,sender):
         print("predicting")
         img = message.getFirstComponent(Image)
-        return await predictImage(groupId,sender,img)
+        return predictImage(groupId,sender,img)
+        
+    # 黄图评价功能
+    elif messageText=="这张图涩吗":
+        if not getSetting(groupId,"yellowPredict"):
+            return [
+                At(target=sender),
+                Plain(text="图片涩度评价功能关闭了呐~想要打开就联系机器人管理员吧~")
+            ]
+        setYellowPredictReady(groupId,sender,True)
+        return [
+            At(target=sender),
+            Plain(text="请发送要预测的图片呐~")
+        ]
+    elif message.hasComponent(Image) and getSetting(groupId,"yellowPredict") and getYellowPredictReady(groupId,sender):
+        print("judging")
+        img = message.getFirstComponent(Image)
+        return judgeImageYellow(groupId,sender,img.url)
     
-    #获取时间功能（可选背景）
+    # 笑话功能
+    elif "来点" in messageText and "笑话" in messageText:
+        name=re.findall(r'来点(.*?)笑话',messageText,re.S)
+        if name==[]:
+            return "noneReply"
+        else:
+            record("joke","none",sender,groupId,True,"function")
+            return getJoke(name[0])
+    # 获取时间功能（可选背景）
     elif messageText in timeCallText:
         clockCalled=getData("clockCalled")
         clockCalled+=1
@@ -465,8 +490,7 @@ async def Process(message,groupId,sender):
             dist=timeDist+str(getClockChoice(groupId,sender))+"/%s.png"%t
             return [Image.fromFileSystem(dist)]
 
-    #选择表盘（获取时间功能）
-    
+    # 选择表盘（获取时间功能）
     elif messageText[:4]=="选择表盘":
         if messageText=="选择表盘":
             return showClock(sender)
@@ -483,19 +507,19 @@ async def Process(message,groupId,sender):
                     Plain(text="再检查下有没有输错呢~\n")
                 ]
 
-    #天气查询功能
+    # 天气查询功能
     elif "[At::target=%i] 天气"%BotQQ in messageText:
         weatherCalled=getData("weatherCalled")
         weatherCalled+=1
         updateData(weatherCalled,"weather")
         return getWeather(message,sender)
 
-    #碧蓝航线wiki查询功能
+    # 碧蓝航线wiki查询功能
     elif "[At::target=%i] blhx："%BotQQ in messageText:
         name=messageText[28:]
         return blhxWiki(sender,name)
         
-    #营销号生成器
+    # 营销号生成器
     elif "[At::target=%i] 营销号"%BotQQ in messageText:
         _,somebody,something,other_word=messageText.split('、')
         # print(something,somebody,other_word)
@@ -528,7 +552,7 @@ async def Process(message,groupId,sender):
     # 翻译功能
     elif "[At::target=%i] "%BotQQ in messageText and "用" in messageText and "怎么说" in messageText:
         supportLanguage={"中文":"zh","英文":"en","日文":"jp","韩文":"kr","法文":"fr","西班牙文":"es","意大利文":"it","德文":"de","土耳其文":"tr","俄文":"ru","葡萄牙文":"pt","越南文":"vi","印度尼西亚文":"id","马来西亚文":"ms","泰文":"th"}
-        tp=re.findall(r'\[At::target=1785007019\] (.*?)用(.*?)怎么说',messageText,re.S)[0]
+        tp=re.findall(r'\[At::target=762802224\] (.*?)用(.*?)怎么说',messageText,re.S)[0]
         text=tp[0]
         target=tp[1]
         print("text:%s,target:%s"%(text,target))
@@ -560,7 +584,7 @@ async def Process(message,groupId,sender):
                 Plain(text="Command error! Use the '@bot command' command to query the commands you can use!")
             ]
     
-    #获取信息处理
+    # 获取信息处理
     elif "[At::target=%i] info."%BotQQ in messageText:
         command=messageText[16:]
         # try:
@@ -569,15 +593,22 @@ async def Process(message,groupId,sender):
         print(info,'-->'," info:",check)
         return infoProcess(groupId,sender,check)
 
-    #wiki处理
+    # wiki处理
     elif "[At::target=%i] wiki"%BotQQ in messageText:
         if '：' in messageText:
             messageText=messageText.replace('：',':')
             print(messageText)
         print("get wiki:%s"%messageText.replace("[At::target=%i] wiki"%BotQQ,""))
         return wikiProcess(groupId,sender,messageText)
+        
+    # 添加管理员处理
+    elif "[At::target=%i] addAdmin"%BotQQ in messageText:
+        target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
+        print("add admin:%d in group %d"%(target,groupId))
+        return addAdmin(groupId,target)
 
-    #回复@bot（normal,zuanLow,zuanHigh,rainbow）
+
+    # 回复@bot（normal,zuanLow,zuanHigh,rainbow）
     elif "[At::target=%i]"%BotQQ in messageText:
         if messageText.replace("[At::target=%d] "%BotQQ,"") in sleepMuteCallText and sender not in getAdmin(groupId):
             return "goodNight"

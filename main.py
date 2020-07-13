@@ -9,12 +9,11 @@ from itertools import chain
 import threading
 import asyncio
 
-BotQQ =  # 字段 qq 的值
-HostQQ =  #主人QQ
+BotQQ =  762802224# 字段 qq 的值 1785007019
+HostQQ = 1900384123 #主人QQ
 authKey = '1234567890' # 字段 authKey 的值
 mirai_api_http_locate = 'localhost:8080/' # httpapi所在主机的地址端口,如果 setting.yml 文件里字段 "enableWebsocket" 的值为 "true" 则需要将 "/" 换成 "/ws", 否则将接收不到消息.
 app = Mirai(f"mirai://{mirai_api_http_locate}?authKey={authKey}&qq={BotQQ}")
-
 
 memberSetuNet={}            #每个群每个成员要的网络setu计数（限制每人五张）
 memberPicCount={}           #每个群成员要setu/real的次数
@@ -39,9 +38,9 @@ non_reply=["setu","bizhi","","别老摸了，给爷冲！","real","几点了","�
 setuCallText=["[Image::A3C91AFE-8834-1A67-DA08-899742AEA4E5]","[Image::A0FE77EE-1F89-BE0E-8E2D-62BCD1CAB312]","[Image::04923170-2ACB-5E94-ECCD-953F46E6CAB9]","[Image::3FFFE3B5-2E5F-7307-31A4-2C7FFD2F395F]","[Image::8A3450C7-0A98-4E81-FA24-4A0342198221]","setu","车车","开车","来点色图","来点儿车车"]
 searchCallText=["search","搜图"]
 timeCallText=["几点啦","几点了","几点啦？","几点了？"]
-setuBot=[]
+setuBot=[1702485633,1816899243,656162369,1553136451,3371686746,1823535226,3028799143,1739014771,2498853789]
 setuGroup=[]
-repeatBot=[]
+repeatBot=[2858306369]
 
 
 

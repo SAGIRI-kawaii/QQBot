@@ -17,13 +17,13 @@ from urllib.parse import quote
 from pynvml import *
 
 
-BotQQ =  # 字段 qq 的值
-HostQQ =  #主人QQ
+BotQQ = 762802224 # 字段 qq 的值 1785007019
+HostQQ = 1900384123 #主人QQ
 settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline"}
 
 # 初始化city列表
 city=[]
-conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
 cur = conn.cursor()
 sql = "select cityZh from city"
 cur.execute(sql) 
@@ -38,7 +38,7 @@ def record(operation,picUrl,sender,groupId,result,operationType):
     responseCalled+=1
     timeNow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(timeNow)
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     if operationType=='img':
         sql = "INSERT INTO imgCalled (time,operation,picUrl,sender,groupId,result) VALUES ('%s','%s','%s',%d,%d,%d)"%(timeNow,operation,pymysql.escape_string(picUrl),sender,groupId,result)
@@ -52,7 +52,7 @@ def record(operation,picUrl,sender,groupId,result,operationType):
 
 # 数据更新
 def updateData(data,operationType):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     if operationType=='setu':
         sql = "UPDATE calledCount SET setuCalled=%d"%data
@@ -72,6 +72,8 @@ def updateData(data,operationType):
         sql = "UPDATE calledCount SET botSetuCount=%d"%data
     elif operationType=='predict':
         sql = "UPDATE calledCount SET predictCount=%d"%data
+    elif operationType=='yellow':
+        sql = "UPDATE calledCount SET yellowPredictCount=%d"%data
     else:
         print("error: none operationType named %s!"%operationType)
         return
@@ -82,7 +84,7 @@ def updateData(data,operationType):
 
 # 添加群信息（数据库）
 def addGroupinit(groupId,groupName):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = """
     INSERT INTO setting 
@@ -98,7 +100,7 @@ def addGroupinit(groupId,groupName):
 
 # 检查有无群组变更(初始化)
 def checkGroupInit(groupList):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select groupId from setting"
     cur.execute(sql) 
@@ -141,7 +143,7 @@ def checkGroupInit(groupList):
 
 # 获取调用次数数据
 def getData(data):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT %s from calledCount"%data
     cur.execute(sql) 
@@ -155,7 +157,7 @@ def getSetting(groupId,name):
     sqlKeyWord=["repeat","real","limit"]
     if name in sqlKeyWord:
         name='`'+name+'`'
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT %s from setting WHERE groupId=%d"%(name,groupId)
     # print(sql)
@@ -169,7 +171,7 @@ def getSetting(groupId,name):
 def updateSetting(groupId,name,new):
     strKeyWord=["speakMode","switch"]
     sqlKeyWord=["repeat","real","limit"]
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     if name in sqlKeyWord:
         name='`'+name+'`'
@@ -184,7 +186,7 @@ def updateSetting(groupId,name,new):
 
 # 获取本群管理员
 def getAdmin(groupId):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT adminId from admin WHERE groupId=%d"%groupId
     cur.execute(sql) 
@@ -196,7 +198,7 @@ def getAdmin(groupId):
 
 # 是否要搜图
 def getSearchReady(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from searchReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -213,7 +215,7 @@ def getSearchReady(groupId,sender):
 
 # 是否要预测
 def getPredictReady(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from predictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -227,10 +229,27 @@ def getPredictReady(groupId,sender):
     cur.close()
     conn.close()
     return result
+    
+# 是否要评价黄图
+def getYellowPredictReady(groupId,sender):
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "SELECT `status` from yellowPredictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
+    cur.execute(sql) 
+    try:
+        result=cur.fetchone()[0]
+    except TypeError:
+        sql="INSERT INTO yellowPredictReady (groupId,memberId,`status`) VALUES (%d,%d,%d)"%(groupId,sender,False)
+        cur.execute(sql) 
+        conn.commit()
+        return False
+    cur.close()
+    conn.close()
+    return result
 
 # 修改搜图判断状态
 def setSearchReady(groupId,sender,status):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from searchReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -245,10 +264,9 @@ def setSearchReady(groupId,sender,status):
     conn.commit()
     conn.close()
 
-
 # 修改预测图片判断状态
 def setPredictReady(groupId,sender,status):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from predictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -258,6 +276,23 @@ def setPredictReady(groupId,sender,status):
         cur.execute(sql) 
     except TypeError:
         sql="INSERT INTO predictReady (groupId,memberId,Status) VALUES (%d,%d,%d)"%(groupId,sender,status)
+        cur.execute(sql) 
+    cur.close()
+    conn.commit()
+    conn.close()
+
+# 修改评价黄图判断状态
+def setYellowPredictReady(groupId,sender,status):
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "SELECT `status` from yellowPredictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
+    cur.execute(sql) 
+    try:
+        result=cur.fetchone()[0]
+        sql="UPDATE yellowPredictReady SET `status`=%d WHERE groupId=%d and memberId=%d"%(status,groupId,sender)
+        cur.execute(sql) 
+    except TypeError:
+        sql="INSERT INTO yellowPredictReady (groupId,memberId,Status) VALUES (%d,%d,%d)"%(groupId,sender,status)
         cur.execute(sql) 
     cur.close()
     conn.commit()
@@ -508,7 +543,7 @@ def getAllData(groupId):
 
 # 获取表盘选择
 def getClockChoice(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT choice from clockChoice WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -543,7 +578,7 @@ def showClock(sender):
 
 # 记录表盘选择
 def recordClock(groupId,sender,choice):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT choice from clockChoice WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -571,7 +606,7 @@ def configChangeJudge(config,change):
         return True
     elif config=="countLimit" and change==True or change==False:
         return True
-    elif (config=="setu" or config=="real" or config=="bizhi" or config=="r18" or config=="search") and change==True or change==False:
+    elif (config=="setu" or config=="real" or config=="bizhi" or config=="r18" or config=="search" or config=="imgPredict") and change==True or change==False:
         return True
     elif config=="speakMode" and change=="normal" or change=="zuanHigh" or change=="zuanLow" or change=="rainbow" or change=="chat":
         return True
@@ -708,7 +743,7 @@ def showSetting(groupId,sender,check):
 # 判断成员能否要图（countLimit模式下）
 def getMemberPicStatus(groupId,sender):
     limit=getSetting(groupId,"limit")
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select count from memberPicCount where groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -764,8 +799,8 @@ def getParams(groupId,sender,plus_item):
     # 请求随机字符串，用于保证签名不可预测  
     nonce_str = ''.join(random.sample(string.ascii_letters + string.digits, 10))
     # 应用标志，这里修改成自己的id和key
-    app_id = ''
-    app_key = ''
+    app_id = '2151754655'
+    app_key = 'M3VEdvDmOOzBU3yB'
     params = {  'app_id' : app_id,
                 'question' : plus_item,
                 'time_stamp':time_stamp,
@@ -800,7 +835,7 @@ def getChatText(groupId,sender,plus_item):
 
 # 获取智能闲聊session
 def getChatSession(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select `session` from chatSession where groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -839,8 +874,8 @@ def translate(groupId,sender,text,source,target):
     # 请求随机字符串，用于保证签名不可预测  
     nonce_str = ''.join(random.sample(string.ascii_letters + string.digits, 10))
     # 应用标志，这里修改成自己的id和key
-    app_id = ''
-    app_key = ''
+    app_id = '2151754655'
+    app_key = 'M3VEdvDmOOzBU3yB'
     params = {  'app_id' : app_id,
                 'text' : text,
                 'time_stamp':time_stamp,
@@ -873,8 +908,8 @@ def textDetect(text):
     # 请求随机字符串，用于保证签名不可预测  
     nonce_str = ''.join(random.sample(string.ascii_letters + string.digits, 10))
     # 应用标志，这里修改成自己的id和key
-    app_id = ''
-    app_key = ''
+    app_id = '2151754655'
+    app_key = 'M3VEdvDmOOzBU3yB'
     params = {  'app_id' : app_id,
                 'candidate_langs':'',
                 'force':'1',
@@ -890,22 +925,66 @@ def textDetect(text):
 
 # 接口签名算法
 def getSign(params):
-    app_key = ''
+    APP_KEY = 'M3VEdvDmOOzBU3yB'
+    app_key = 'M3VEdvDmOOzBU3yB'
     paramsKeys=sorted(params.keys())
+    print(paramsKeys)
     # print(params)
     sign=""
     for i in paramsKeys:
-        if i=="text":
-            sign+="%s=%s&"%(i,parse.quote(params[i]))
-        elif i=="candidate_langs":
-            pass
-        else:
-            sign+="%s=%s&"%(i,params[i])
+        if not params[i]=='':
+            sign+="%s=%s&"%(i,parse.quote(params[i], safe=''))
     sign+="app_key=%s"%app_key
-    # print("sign:",sign)
+    print("sign:",sign)
     sign=curlmd5(sign)
-    # print("signMD5:",sign)
+    print("signMD5:",sign)
     return sign
+
+#图片鉴黄
+def judgeImageYellow(groupId,sender,image_url):
+    setYellowPredictReady(groupId,sender,False)
+    # yellowPredictCount=getData("yellowPredictCount")+1
+    # print(yellowPredictCount)
+    # updateData(yellowPredictCount,"yellow")
+    # dist="%s%s.png"%(searchDist,searchCount)
+    url="https://api.ai.qq.com/fcgi-bin/vision/vision_porn"
+    # 请求时间戳（秒级），用于防止请求重放（保证签名5分钟有效)
+    t = time.time()
+    time_stamp = str(int(t))
+    # 请求随机字符串，用于保证签名不可预测  
+    nonce_str = ''.join(random.sample(string.ascii_letters + string.digits, 10))
+    # 应用标志，这里修改成自己的id和key
+    app_id = '2151754655'
+    app_key = 'M3VEdvDmOOzBU3yB'
+    params = {  'app_id' : app_id,
+                'time_stamp':time_stamp,
+                'nonce_str':nonce_str,
+                'image_url':str(image_url)
+             }
+    params['sign'] = getSign(params)
+    print(params)
+    r = requests.post(url,params=params)
+    print(r.text)
+    if r.json()["ret"]>0:
+        return [
+        At(target=sender),
+        Plain("Error!:\nReason:"),
+        Plain(text="%s"%r.json()["msg"])
+        ]
+    elif r.json()["ret"]==0:
+        return [
+        At(target=sender),
+        Plain("Possiblity Result:\n"),
+        Plain("Normal :%"),
+        Plain(text="%d"%r.json()["data"]["tag_list"][0]["tag_confidence"]),
+        Plain("Hot :%"),
+        Plain(text="%d"%r.json()["data"]["tag_list"][1]["tag_confidence"]),
+        Plain("Sexy :%"),
+        Plain(text="%d"%r.json()["data"]["tag_list"][2]["tag_confidence"]),
+        Plain("Total :%"),
+        Plain(text="%d"%r.json()["data"]["tag_list"][9]["tag_confidence"])
+        ]
+
 
 # 返回Linux命令介绍
 def getLinuxExplanation(command):
@@ -924,3 +1003,40 @@ def randomJudge():
     if p<=30:
         return True
     return False
+
+# 添加管理员
+def addAdmin(groupId,adminId):
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "select adminId from admin where groupId=%d"%groupId
+    cur.execute(sql) 
+    data = cur.fetchall()
+    admin=list(chain.from_iterable(data))
+    if admin==[]:
+        sql = "insert into adminId (groupId,admionId) values (%d,%d))"%(groupId,adminId)
+        cur.execute(sql) 
+        conn.commit()
+    else:
+        return [Plain(text="id:%d is already in group:%d's admin list!")]
+    cur.close()
+    conn.close()
+    return [Plain(text="id:%d add into group:%d's admin list!")]
+
+# 返回笑话
+def getJoke(name):
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "select * from jokes order by rand() limit 1"
+    cur.execute(sql) 
+    joke = cur.fetchone()
+    if joke==(None,):
+        cur.close()
+        conn.close()
+        return [Plain(text="笑话数据库为空！")]
+    else:
+        cur.close()
+        conn.close()
+        joke=joke[0]
+        joke=joke.replace("%name%",name)
+        joke=joke.replace("\n","")
+        return [Plain(text=joke)]
