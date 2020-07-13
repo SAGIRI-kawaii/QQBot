@@ -552,7 +552,7 @@ async def Process(message,groupId,sender):
     # 翻译功能
     elif "[At::target=%i] "%BotQQ in messageText and "用" in messageText and "怎么说" in messageText:
         supportLanguage={"中文":"zh","英文":"en","日文":"jp","韩文":"kr","法文":"fr","西班牙文":"es","意大利文":"it","德文":"de","土耳其文":"tr","俄文":"ru","葡萄牙文":"pt","越南文":"vi","印度尼西亚文":"id","马来西亚文":"ms","泰文":"th"}
-        tp=re.findall(r'\[At::target=762802224\] (.*?)用(.*?)怎么说',messageText,re.S)[0]
+        tp=re.findall(r'\[At::target=\] (.*?)用(.*?)怎么说',messageText,re.S)[0]    #target后面换成qqbot
         text=tp[0]
         target=tp[1]
         print("text:%s,target:%s"%(text,target))
