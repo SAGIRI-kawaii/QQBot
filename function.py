@@ -17,9 +17,9 @@ from urllib.parse import quote
 from pynvml import *
 
 
-BotQQ = 762802224 # 字段 qq 的值 1785007019
-HostQQ = 1900384123 #主人QQ
-dbPass = "duyifan2004"
+BotQQ =  # 字段 qq 的值 1785007019
+HostQQ =  #主人QQ
+dbPass = ""
 settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline"}
 
 # 初始化city列表
