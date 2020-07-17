@@ -28,7 +28,7 @@ def predictImage(groupId,sender,img):
     predictCount=getData("predictCount")
     print(predictCount)
     updateData(predictCount+1,"predict")
-    dist="%s%s.jpg"%(predictDist,predictCount)
+    dist="%s%s.png"%(predictDist,predictCount)
     img_content=requests.get(img.url).content
     image=IMG.open(BytesIO(img_content))
     image.save(dist)

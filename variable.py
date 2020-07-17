@@ -217,6 +217,10 @@ wikiLinux=[
     Plain(text="注：本功能并未收录全部命令，会有许多命令查询不到")
 ]
 
+wikiQuotes=[
+    Plain(text="\n群语录功能使用方式\n在群中直接发送'群语录'即可")
+]
+
 setuSetting=[
     Plain(text="\nsetu功能设置：\n"),
     Plain(text="@bot setting.setu.Enable/Disable\n"),

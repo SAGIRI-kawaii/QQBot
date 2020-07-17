@@ -15,7 +15,7 @@ settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"n
 sleepMuteCallText=["精致睡眠","晚安","晚安，精致睡眠"]
 muteAllCallText=["万籁俱寂"]
 unmuteAllCallText=["春回大地","万物复苏"]
-blackList=[]
+blackList=[2518357362]
 
 # setting语句处理
 def settingProcess(groupId,sender,config,change):
@@ -86,7 +86,7 @@ def wikiProcess(groupId,sender,messageText):
     firstLevelDirectory=["function","management"]
     secondFLevelDirectory=["img","weather","yxh","blhx","ask","translate","speakMode","mute"]
     secondMLevelDirectory=["setting","info"]
-    finalFLevelDirectory={"setu":wikiSetu,"real":wikiReal,"bizhi":wikiBizhi,"search":wikiSearch,"predict":wikiPredict,"weather":wikiWeather,"yxh":wikiYxh,"blhx":wikiBlhx,"ask":wikiAsk,"translate":wikiTranslate,"speakMode":wikiSpeakMode,"mute":wikiMute,"linux":wikiLinux} 
+    finalFLevelDirectory={"setu":wikiSetu,"real":wikiReal,"bizhi":wikiBizhi,"search":wikiSearch,"predict":wikiPredict,"weather":wikiWeather,"yxh":wikiYxh,"blhx":wikiBlhx,"ask":wikiAsk,"translate":wikiTranslate,"speakMode":wikiSpeakMode,"mute":wikiMute,"linux":wikiLinux,"quotes":wikiQuotes} 
     finalSLevelDirectory={"setuSetting":setuSetting,"r18Setting":r18Setting,"realSetting":realSetting,"bizhiSetting":bizhiSetting,"searchSetting":searchSetting,"countLimitSetting":countLimitSetting,"limitSetting":limitSetting,"blacklistSetting":blacklistSetting,"repeatSetting":repeatSetting,"speakModeSetting":speakModeSetting}
     finalILevelDirectory={"repeatInfo":repeatInfo,"setuLocalInfo":setuLocalInfo,"bizhiLocalInfo":bizhiLocalInfo,"countLimitInfo":countLimitInfo,"setuInfo":setuInfo,"bizhiInfo":bizhiInfo,"realInfo":realInfo,"r18Info":r18Info,"speakModeInfo":speakModeInfo,"switchInfo":switchInfo,"allInfo":allInfo,"sysInfo":sysInfo,"groupInfo":groupInfo}
     print(messageText)
@@ -115,6 +115,7 @@ def wikiProcess(groupId,sender,messageText):
             Plain(text="7.translate(翻译)\n"),
             Plain(text="8.speakMode(不同回复模式)\n"),
             Plain(text="9.mute(有关禁言的功能)\n"),
+            Plain(text="10.quotes(有关群语录)\n"),
             Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
             Plain(text="如：@bot wiki:img\n")
         ]
@@ -239,8 +240,24 @@ def wikiProcess(groupId,sender,messageText):
             Plain(text="仔细看看是不是输入错误了呐~")
         ]
 
+# func语句处理
+def funcProcess(groupId,sender,func,content,target):
+    if sender in getAdmin(groupId):
+        if func=="addQuote":
+            # print(groupId,target,content,func)
+            try:
+                target=re.findall(r'\[At::target=(.*?)\]',target,re.S)[0]
+            except:
+                pass
+            return addCelebrityQuotes(groupId,int(target),content,"text")
+    else:
+        return [
+            At(target=sender),
+            Plain(text="只有主人和管理员才能添加群语录哦~")
+        ]
+
 # 语句处理
-async def Process(message,groupId,sender):
+async def Process(message,groupId,sender,memberList):
 
     responseCalled=getData("responseCalled")
     responseCalled+=1                               #responseCalled计数
@@ -462,6 +479,11 @@ async def Process(message,groupId,sender):
         else:
             record("joke","none",sender,groupId,True,"function")
             return getJoke(name[0])
+
+    # 群语录功能 celebrityQuotes
+    elif messageText=="群语录":
+        return getCelebrityQuotes(groupId,memberList)
+
     # 获取时间功能（可选背景）
     elif messageText in timeCallText:
         clockCalled=getData("clockCalled")
@@ -552,7 +574,7 @@ async def Process(message,groupId,sender):
     # 翻译功能
     elif "[At::target=%i] "%BotQQ in messageText and "用" in messageText and "怎么说" in messageText:
         supportLanguage={"中文":"zh","英文":"en","日文":"jp","韩文":"kr","法文":"fr","西班牙文":"es","意大利文":"it","德文":"de","土耳其文":"tr","俄文":"ru","葡萄牙文":"pt","越南文":"vi","印度尼西亚文":"id","马来西亚文":"ms","泰文":"th"}
-        tp=re.findall(r'\[At::target=\] (.*?)用(.*?)怎么说',messageText,re.S)[0]    #target后面换成qqbot
+        tp=re.findall(r'\[At::target=762802224\] (.*?)用(.*?)怎么说',messageText,re.S)[0]
         text=tp[0]
         target=tp[1]
         print("text:%s,target:%s"%(text,target))
@@ -601,6 +623,14 @@ async def Process(message,groupId,sender):
         print("get wiki:%s"%messageText.replace("[At::target=%i] wiki"%BotQQ,""))
         return wikiProcess(groupId,sender,messageText)
         
+    # 添加群语录处理 @bot func.addQuote.content.target
+    elif "[At::target=%i] func.addQuote."%BotQQ in messageText:
+        try:
+            _,func,content,target=messageText.split(".")
+            return funcProcess(groupId,sender,func,content,target)
+        except Exception:
+            pass
+
     # 添加管理员处理
     elif "[At::target=%i] addAdmin"%BotQQ in messageText:
         target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
