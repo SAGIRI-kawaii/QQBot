@@ -16,15 +16,28 @@ import string
 from urllib.parse import quote
 from pynvml import *
 import base64
+import io
 
-BotQQ = 762802224 # 字段 qq 的值 1785007019
-HostQQ = 1900384123 #主人QQ
-dbPass = "duyifan2004"
+# 从config中获取配置
+def getConfig(config):
+    with open('config.json', 'r', encoding='utf-8') as f:  # 从json读配置
+        configs = json.loads(f.read())
+    if config in configs.keys():
+        return configs[config]
+    else:
+        print("getConfig Error:%s"%config)
+
+BotQQ = getConfig("BotQQ") # 字段 qq 的值
+HostQQ = getConfig("HostQQ") #主人QQ
+dbPass = getConfig("dbPass")
+host = getConfig("dbHost")
+user = getConfig("dbUser")
+db = getConfig("dbName")
 settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline"}
 
 # 初始化city列表
 city=[]
-conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
 cur = conn.cursor()
 sql = "select cityZh from city"
 cur.execute(sql) 
@@ -33,27 +46,9 @@ city=list(chain.from_iterable(data))
 cur.close()
 conn.close()
 
-# 日志记录
-def record(operation,picUrl,sender,groupId,result,operationType):
-    global responseCalled
-    responseCalled+=1
-    timeNow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(timeNow)
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
-    cur = conn.cursor()
-    if operationType=='img':
-        sql = "INSERT INTO imgCalled (time,operation,picUrl,sender,groupId,result) VALUES ('%s','%s','%s',%d,%d,%d)"%(timeNow,operation,pymysql.escape_string(picUrl),sender,groupId,result)
-    elif operationType=='function':
-        sql = "INSERT INTO functionCalled (time,operation,sender,groupId,result) VALUES ('%s','%s',%d,%d,%d)"%(timeNow,operation,sender,groupId,result)
-    cur.execute(sql) 
-    cur.close()
-    conn.commit()
-    conn.close()
-    print("data recorded!")
-
 # 数据更新
 def updateData(data,operationType):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     if operationType=='setu':
         sql = "UPDATE calledCount SET setuCalled=%d"%data
@@ -83,9 +78,27 @@ def updateData(data,operationType):
     conn.commit()
     conn.close()
 
+# 日志记录
+def record(operation,picUrl,sender,groupId,result,operationType):
+    responseCalled=getData("responseCalled")+1
+    updateData(responseCalled,"response")
+    timeNow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(timeNow)
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    if operationType=='img':
+        sql = "INSERT INTO imgCalled (time,operation,picUrl,sender,groupId,result) VALUES ('%s','%s','%s',%d,%d,%d)"%(timeNow,operation,pymysql.escape_string(picUrl),sender,groupId,result)
+    elif operationType=='function':
+        sql = "INSERT INTO functionCalled (time,operation,sender,groupId,result) VALUES ('%s','%s',%d,%d,%d)"%(timeNow,operation,sender,groupId,result)
+    cur.execute(sql) 
+    cur.close()
+    conn.commit()
+    conn.close()
+    print("data recorded!")
+
 # 添加群信息（数据库）
 def addGroupinit(groupId,groupName):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = """
     INSERT INTO setting 
@@ -101,7 +114,7 @@ def addGroupinit(groupId,groupName):
 
 # 检查有无群组变更(初始化)
 def checkGroupInit(groupList):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select groupId from setting"
     cur.execute(sql) 
@@ -144,7 +157,7 @@ def checkGroupInit(groupList):
 
 # 获取调用次数数据
 def getData(data):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT %s from calledCount"%data
     cur.execute(sql) 
@@ -158,7 +171,7 @@ def getSetting(groupId,name):
     sqlKeyWord=["repeat","real","limit"]
     if name in sqlKeyWord:
         name='`'+name+'`'
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT %s from setting WHERE groupId=%d"%(name,groupId)
     # print(sql)
@@ -172,7 +185,7 @@ def getSetting(groupId,name):
 def updateSetting(groupId,name,new):
     strKeyWord=["speakMode","switch"]
     sqlKeyWord=["repeat","real","limit"]
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     if name in sqlKeyWord:
         name='`'+name+'`'
@@ -187,7 +200,7 @@ def updateSetting(groupId,name,new):
 
 # 获取本群管理员
 def getAdmin(groupId):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT adminId from admin WHERE groupId=%d"%groupId
     cur.execute(sql) 
@@ -199,7 +212,7 @@ def getAdmin(groupId):
 
 # 是否要搜图
 def getSearchReady(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from searchReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -216,7 +229,7 @@ def getSearchReady(groupId,sender):
 
 # 是否要预测
 def getPredictReady(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from predictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -233,7 +246,7 @@ def getPredictReady(groupId,sender):
     
 # 是否要评价黄图
 def getYellowPredictReady(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from yellowPredictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -250,7 +263,7 @@ def getYellowPredictReady(groupId,sender):
 
 # 修改搜图判断状态
 def setSearchReady(groupId,sender,status):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from searchReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -267,7 +280,7 @@ def setSearchReady(groupId,sender,status):
 
 # 修改预测图片判断状态
 def setPredictReady(groupId,sender,status):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from predictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -284,7 +297,7 @@ def setPredictReady(groupId,sender,status):
 
 # 修改评价黄图判断状态
 def setYellowPredictReady(groupId,sender,status):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT `status` from yellowPredictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -546,7 +559,7 @@ def getAllData(groupId):
 
 # 获取表盘选择
 def getClockChoice(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT choice from clockChoice WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -581,7 +594,7 @@ def showClock(sender):
 
 # 记录表盘选择
 def recordClock(groupId,sender,choice):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "SELECT choice from clockChoice WHERE groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -746,7 +759,7 @@ def showSetting(groupId,sender,check):
 # 判断成员能否要图（countLimit模式下）
 def getMemberPicStatus(groupId,sender):
     limit=getSetting(groupId,"limit")
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select count from memberPicCount where groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -802,8 +815,8 @@ def getParams(groupId,sender,plus_item):
     # 请求随机字符串，用于保证签名不可预测  
     nonce_str = ''.join(random.sample(string.ascii_letters + string.digits, 10))
     # 应用标志，这里修改成自己的id和key
-    app_id = '2151754655'
-    app_key = 'M3VEdvDmOOzBU3yB'
+    app_id=getConfig("app_id")
+    app_key =getConfig("app_key")
     params = {  'app_id' : app_id,
                 'question' : plus_item,
                 'time_stamp':time_stamp,
@@ -838,7 +851,7 @@ def getChatText(groupId,sender,plus_item):
 
 # 获取智能闲聊session
 def getChatSession(groupId,sender):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select `session` from chatSession where groupId=%d and memberId=%d"%(groupId,sender)
     cur.execute(sql) 
@@ -877,8 +890,8 @@ def translate(groupId,sender,text,source,target):
     # 请求随机字符串，用于保证签名不可预测  
     nonce_str = ''.join(random.sample(string.ascii_letters + string.digits, 10))
     # 应用标志，这里修改成自己的id和key
-    app_id = '2151754655'
-    app_key = 'M3VEdvDmOOzBU3yB'
+    app_id=getConfig("app_id")
+    app_key =getConfig("app_key")
     params = {  'app_id' : app_id,
                 'text' : text,
                 'time_stamp':time_stamp,
@@ -911,8 +924,8 @@ def textDetect(text):
     # 请求随机字符串，用于保证签名不可预测  
     nonce_str = ''.join(random.sample(string.ascii_letters + string.digits, 10))
     # 应用标志，这里修改成自己的id和key
-    app_id = '2151754655'
-    app_key = 'M3VEdvDmOOzBU3yB'
+    app_id=getConfig("app_id")
+    app_key =getConfig("app_key")
     params = {  'app_id' : app_id,
                 'candidate_langs':'',
                 'force':'1',
@@ -928,8 +941,8 @@ def textDetect(text):
 
 # 接口签名算法
 def getSign(params):
-    APP_KEY = 'M3VEdvDmOOzBU3yB'
-    app_key = 'M3VEdvDmOOzBU3yB'
+    APP_KEY = getConfig("app_key")
+    app_key = getConfig("app_key")
     paramsKeys=sorted(params.keys())
     # print(paramsKeys)
     # print(params)
@@ -958,7 +971,7 @@ def get_outfile(infile, outfile):
     return outfile
 
 # 图片压缩
-def compress_image(infile, outfile='', mb=1000, step=10, quality=80):
+def compress_image(infile, outfile='', mb=900, step=10, quality=80):
     """不改变图片尺寸压缩到指定大小
     :param infile: 压缩源文件
     :param outfile: 压缩文件保存地址
@@ -984,11 +997,11 @@ def base_64(pic_path):
     size = os.path.getsize(pic_path) / 1024
     if size > 900:
         print('>>>>压缩<<<<')
-        with Image.open(pic_path) as img:
+        with IMG.open(pic_path) as img:
             w, h = img.size
             newWidth = 500
             newHeight = round(newWidth / w * h)
-            img = img.resize((newWidth, newHeight), Image.ANTIALIAS)
+            img = img.resize((newWidth, newHeight), IMG.ANTIALIAS)
             img_buffer = io.BytesIO()  # 生成buffer
             img.save(img_buffer, format='PNG', quality=70)
             byte_data = img_buffer.getvalue()
@@ -1005,16 +1018,12 @@ def judgeImageYellow(groupId,sender,img_url):
     yellowPredictCount=getData("searchCount")+1
     # print(yellowPredictCount)
     updateData(yellowPredictCount,"search")
+    yellowJudgeDist="M:\pixiv\\yellowJudge\\"
     dist="%s%s.png"%(yellowJudgeDist,yellowPredictCount)
     img_content=requests.get(img_url).content
     image=IMG.open(BytesIO(img_content))
     image.save(dist)
     imgBase64=base_64(dist)
-    # dist=compress_image(dist,yellowJudgeDist)
-    # with open(dist, 'rb') as f:
-    #     image = f.read()
-    #     imgBase64=base64.b64encode(image)
-    #     imgBase64=imgBase64.decode()
     url="https://api.ai.qq.com/fcgi-bin/vision/vision_porn"
     # 请求时间戳（秒级），用于防止请求重放（保证签名5分钟有效)
     t = time.time()
@@ -1022,8 +1031,8 @@ def judgeImageYellow(groupId,sender,img_url):
     # 请求随机字符串，用于保证签名不可预测  
     nonce_str = ''.join(random.sample(string.ascii_letters + string.digits, 10))
     # 应用标志，这里修改成自己的id和key
-    app_id = '2151754655'
-    app_key = 'M3VEdvDmOOzBU3yB'
+    app_id=getConfig("app_id")
+    app_key =getConfig("app_key")
     params = {  'app_id' : app_id,
                 'time_stamp':time_stamp,
                 'nonce_str':nonce_str,
@@ -1032,7 +1041,7 @@ def judgeImageYellow(groupId,sender,img_url):
     params['sign'] = getSign(params)
     # params['image']=parse.quote(params['image'], safe='')
     # print(params)
-    r = requests.post(url,params=params)
+    r = requests.post(url,data=params)
     # print(r.text)
     print(r.text)
     if r.json()["ret"]>0:
@@ -1043,16 +1052,12 @@ def judgeImageYellow(groupId,sender,img_url):
         ]
     elif r.json()["ret"]==0:
         return [
-        At(target=sender),
-        Plain("Possiblity Result:\n"),
-        Plain("Normal :%"),
-        Plain(text="%d"%r.json()["data"]["tag_list"][0]["tag_confidence"]),
-        Plain("Hot :%"),
-        Plain(text="%d"%r.json()["data"]["tag_list"][1]["tag_confidence"]),
-        Plain("Sexy :%"),
-        Plain(text="%d"%r.json()["data"]["tag_list"][2]["tag_confidence"]),
-        Plain("Total :%"),
-        Plain(text="%d"%r.json()["data"]["tag_list"][9]["tag_confidence"])
+            At(target=sender),
+            Plain("\nPossiblity Result:\n"),
+            Plain("Normal :%d%%\n"%r.json()["data"]["tag_list"][0]["tag_confidence"]),
+            Plain("Hot :%d%%\n"%r.json()["data"]["tag_list"][1]["tag_confidence"]),
+            Plain("Sexy :%d%%\n"%r.json()["data"]["tag_list"][2]["tag_confidence"]),
+            Plain("Total :%d%%"%r.json()["data"]["tag_list"][9]["tag_confidence"])
         ]
 
 
@@ -1076,7 +1081,7 @@ def randomJudge():
 
 # 添加管理员
 def addAdmin(groupId,adminId):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select adminId from admin where groupId=%d and adminId=%d"%(groupId,adminId)
     cur.execute(sql) 
@@ -1093,7 +1098,7 @@ def addAdmin(groupId,adminId):
 
 # 添加管理员
 def deleteAdmin(groupId,adminId):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select adminId from admin where groupId=%d and adminId=%d"%(groupId,adminId)
     cur.execute(sql) 
@@ -1110,7 +1115,7 @@ def deleteAdmin(groupId,adminId):
 
 # 返回笑话
 def getJoke(name):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select * from jokes order by rand() limit 1"
     cur.execute(sql) 
@@ -1129,7 +1134,7 @@ def getJoke(name):
 
 # 返回群语录
 def getCelebrityQuotes(groupId,memberList):
-    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql = "select * from celebrityQuotes where groupId=%d order by rand() limit 1"%groupId
     cur.execute(sql) 
@@ -1159,7 +1164,7 @@ def getCelebrityQuotes(groupId,memberList):
 def addCelebrityQuotes(groupId,memberId,content,quoteFormat):
     # print(groupId,memberId,content,quoteFormat)
     try:
-        conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+        conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
         cur = conn.cursor()
         sql = "insert into celebrityQuotes (groupId, memberId, content, `format`)values(%d,%d,'%s','%s')"%(groupId,memberId,content,quoteFormat)
         cur.execute(sql) 
@@ -1169,7 +1174,3 @@ def addCelebrityQuotes(groupId,memberId,content,quoteFormat):
         return [Plain(text="语录添加成功！")]
     except Exception as e:
         return [Plain(text="%s"%e)]
-
-# 从config中获取配置
-def getConfig(config):
-    pass

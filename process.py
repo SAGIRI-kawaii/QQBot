@@ -339,7 +339,10 @@ async def Process(message,groupId,sender,memberList):
             if getSetting(groupId,"countLimit"):                   #如果有每分钟调用次数限制
                 if not getMemberPicStatus(groupId,sender):
                     record("real","none",sender,groupId,False,"img")
-                    return [Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))]
+                    return [
+                        At(target=sender),
+                        Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))
+                    ]
             if getSetting(groupId,"imgLightning") and randomJudge():
                 record("real","lightning",sender,groupId,False,"img")
                 return "lightningPic"
@@ -636,7 +639,12 @@ async def Process(message,groupId,sender,memberList):
         target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
         print("add admin:%d in group %d"%(target,groupId))
         return addAdmin(groupId,target)
-
+        
+    # 添加管理员处理
+    elif "[At::target=%i] deleteAdmin"%BotQQ in messageText:
+        target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
+        print("delete admin:%d in group %d"%(target,groupId))
+        return addAdmin(groupId,target)
 
     # 回复@bot（normal,zuanLow,zuanHigh,rainbow）
     elif "[At::target=%i]"%BotQQ in messageText:

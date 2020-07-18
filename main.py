@@ -8,11 +8,12 @@ import pymysql
 from itertools import chain
 import threading
 import asyncio
+from function import *
 
-BotQQ =  # 字段 qq 的值 1785007019
-HostQQ =  #主人QQ
-authKey = '1234567890' # 字段 authKey 的值
-mirai_api_http_locate = 'localhost:8080/' # httpapi所在主机的地址端口,如果 setting.yml 文件里字段 "enableWebsocket" 的值为 "true" 则需要将 "/" 换成 "/ws", 否则将接收不到消息.
+BotQQ =  getConfig("BotQQ")  # 字段 qq 的值 1785007019
+HostQQ = getConfig("HostQQ") #主人QQ
+authKey = getConfig("authKey") # 字段 authKey 的值
+mirai_api_http_locate = getConfig("mirai_api_http_locate") # httpapi所在主机的地址端口,如果 setting.yml 文件里字段 "enableWebsocket" 的值为 "true" 则需要将 "/" 换成 "/ws", 否则将接收不到消息.
 app = Mirai(f"mirai://{mirai_api_http_locate}?authKey={authKey}&qq={BotQQ}")
 
 memberSetuNet={}            #每个群每个成员要的网络setu计数（限制每人五张）
@@ -41,10 +42,6 @@ timeCallText=["几点啦","几点了","几点啦？","几点了？"]
 setuBot=[]
 setuGroup=[]
 repeatBot=[]
-
-
-
-
 
 @app.subroutine
 async def subroutine1(app: Mirai):
@@ -82,20 +79,20 @@ async def subroutine1(app: Mirai):
     #     ])
         #读取信息并存储
 
-    with open(dragonDist,"r") as f:
-        today=datetime.datetime.now().strftime("%Y-%m-%d")
-        text = f.readline().strip()
-        print(text,today)
-        if not text==str(today):
-            return
-        while 1:
-            text = f.readline().strip()
-            if not text:
-                break
-            groupid,memberid,count=text.split(":")
-            groupid=int(groupid)
-            memberid=int(memberid)
-            memberPicCount[groupid][memberid]=int(count)
+    # with open(dragonDist,"r") as f:
+    #     today=datetime.datetime.now().strftime("%Y-%m-%d")
+    #     text = f.readline().strip()
+    #     print(text,today)
+    #     if not text==str(today):
+    #         return
+    #     while 1:
+    #         text = f.readline().strip()
+    #         if not text:
+    #             break
+    #         groupid,memberid,count=text.split(":")
+    #         groupid=int(groupid)
+    #         memberid=int(memberid)
+    #         memberPicCount[groupid][memberid]=int(count)
 
 @app.receiver("FriendMessage")
 async def event_gm(app: Mirai, friend: Friend, message:MessageChain):
