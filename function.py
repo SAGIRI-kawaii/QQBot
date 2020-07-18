@@ -15,11 +15,11 @@ import hashlib
 import string
 from urllib.parse import quote
 from pynvml import *
+import base64
 
-
-BotQQ =  # 字段 qq 的值 1785007019
-HostQQ =  #主人QQ
-dbPass = ""
+BotQQ = 762802224 # 字段 qq 的值 1785007019
+HostQQ = 1900384123 #主人QQ
+dbPass = "duyifan2004"
 settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline"}
 
 # 初始化city列表
@@ -302,8 +302,8 @@ def setYellowPredictReady(groupId,sender,status):
 # 随机图片路径
 def randomPic(dir):
     pathDir = os.listdir(dir)
-    seed = int(time.time())
-    random.seed(seed)
+    # seed = int(time.time())
+    # random.seed(seed)
     dist = random.sample(pathDir, 1)[0]
     return dir+dist
 
@@ -609,7 +609,7 @@ def configChangeJudge(config,change):
         return True
     elif config=="countLimit" and change==True or change==False:
         return True
-    elif (config=="setu" or config=="real" or config=="bizhi" or config=="r18" or config=="search" or config=="imgPredict") and change==True or change==False:
+    elif (config=="setu" or config=="real" or config=="bizhi" or config=="r18" or config=="search" or config=="imgPredict" or config=="imgLightning") and change==True or change==False:
         return True
     elif config=="speakMode" and change=="normal" or change=="zuanHigh" or change=="zuanLow" or change=="rainbow" or change=="chat":
         return True
@@ -931,25 +931,90 @@ def getSign(params):
     APP_KEY = 'M3VEdvDmOOzBU3yB'
     app_key = 'M3VEdvDmOOzBU3yB'
     paramsKeys=sorted(params.keys())
-    print(paramsKeys)
+    # print(paramsKeys)
     # print(params)
     sign=""
     for i in paramsKeys:
         if not params[i]=='':
             sign+="%s=%s&"%(i,parse.quote(params[i], safe=''))
     sign+="app_key=%s"%app_key
-    print("sign:",sign)
+    # print("sign:",sign)
     sign=curlmd5(sign)
     print("signMD5:",sign)
     return sign
 
-#图片鉴黄
-def judgeImageYellow(groupId,sender,image_url):
+# 获取图片大小
+def get_size(file):
+    # 获取文件大小:KB
+    size = os.path.getsize(file)
+    return size / 1024
+
+# 拼接输出文件地址
+def get_outfile(infile, outfile):
+    if outfile:
+        return outfile
+    dir, suffix = os.path.splitext(infile)
+    outfile = '{}-out{}'.format(dir, suffix)
+    return outfile
+
+# 图片压缩
+def compress_image(infile, outfile='', mb=1000, step=10, quality=80):
+    """不改变图片尺寸压缩到指定大小
+    :param infile: 压缩源文件
+    :param outfile: 压缩文件保存地址
+    :param mb: 压缩目标，KB
+    :param step: 每次调整的压缩比率
+    :param quality: 初始压缩比率
+    :return: 压缩文件地址，压缩文件大小
+    """
+    o_size = get_size(infile)
+    if o_size <= mb:
+        return infile
+    outfile = get_outfile(infile, outfile)
+    while o_size > mb:
+        im = Image.open(infile)
+        im.save(outfile, quality=quality)
+        if quality - step < 0:
+            break
+        quality -= step
+        o_size = get_size(outfile)
+    return outfile
+
+def base_64(pic_path):
+    size = os.path.getsize(pic_path) / 1024
+    if size > 900:
+        print('>>>>压缩<<<<')
+        with Image.open(pic_path) as img:
+            w, h = img.size
+            newWidth = 500
+            newHeight = round(newWidth / w * h)
+            img = img.resize((newWidth, newHeight), Image.ANTIALIAS)
+            img_buffer = io.BytesIO()  # 生成buffer
+            img.save(img_buffer, format='PNG', quality=70)
+            byte_data = img_buffer.getvalue()
+            base64_data = base64.b64encode(byte_data)
+            code = base64_data.decode()
+            return code
+    with open(pic_path, 'rb') as f:
+        coding = base64.b64encode(f.read())  # 读取文件内容，转换为base64编码
+        return coding.decode()
+
+# 图片鉴黄
+def judgeImageYellow(groupId,sender,img_url):
     setYellowPredictReady(groupId,sender,False)
-    # yellowPredictCount=getData("yellowPredictCount")+1
+    yellowPredictCount=getData("searchCount")+1
     # print(yellowPredictCount)
-    # updateData(yellowPredictCount,"yellow")
-    # dist="%s%s.png"%(searchDist,searchCount)
+    updateData(yellowPredictCount,"search")
+    dist="%s%s.png"%(yellowJudgeDist,yellowPredictCount)
+    img_content=requests.get(img_url).content
+    image=IMG.open(BytesIO(img_content))
+    image.save(dist)
+    imgBase64=base_64(dist)
+    # dist=compress_image(dist,yellowJudgeDist)
+    # with open(dist, 'rb') as f:
+    #     image = f.read()
+    #     imgBase64=base64.b64encode(image)
+    #     imgBase64=imgBase64.decode()
     url="https://api.ai.qq.com/fcgi-bin/vision/vision_porn"
     # 请求时间戳（秒级），用于防止请求重放（保证签名5分钟有效)
     t = time.time()
@@ -962,11 +1027,13 @@ def judgeImageYellow(groupId,sender,image_url):
     params = {  'app_id' : app_id,
                 'time_stamp':time_stamp,
                 'nonce_str':nonce_str,
-                'image_url':str(image_url)
+                'image':imgBase64
              }
     params['sign'] = getSign(params)
-    print(params)
+    # params['image']=parse.quote(params['image'], safe='')
+    # print(params)
     r = requests.post(url,params=params)
+    # print(r.text)
     print(r.text)
     if r.json()["ret"]>0:
         return [
@@ -1011,19 +1078,35 @@ def randomJudge():
 def addAdmin(groupId,adminId):
     conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
     cur = conn.cursor()
-    sql = "select adminId from admin where groupId=%d"%groupId
+    sql = "select adminId from admin where groupId=%d and adminId=%d"%(groupId,adminId)
     cur.execute(sql) 
-    data = cur.fetchall()
-    admin=list(chain.from_iterable(data))
-    if admin==[]:
-        sql = "insert into adminId (groupId,admionId) values (%d,%d)"%(groupId,adminId)
+    admin = cur.fetchone()
+    if admin==None:
+        sql = "insert into admin (groupId,adminId) values (%d,%d)"%(groupId,adminId)
         cur.execute(sql) 
         conn.commit()
     else:
-        return [Plain(text="id:%d is already in group:%d's admin list!")]
+        return [Plain(text="id:%d is already in group:%d's admin list!"%(adminId,groupId))]
     cur.close()
     conn.close()
-    return [Plain(text="id:%d add into group:%d's admin list!")]
+    return [Plain(text="id:%d add into group:%d's admin list!"%(adminId,groupId))]
+
+# 添加管理员
+def deleteAdmin(groupId,adminId):
+    conn = pymysql.connect(host='127.0.0.1', user = "root", passwd=dbPass, db="qqbot", port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "select adminId from admin where groupId=%d and adminId=%d"%(groupId,adminId)
+    cur.execute(sql) 
+    admin = cur.fetchone()
+    if admin==None:
+        sql = "insert into admin (groupId,adminId) values (%d,%d)"%(groupId,adminId)
+        cur.execute(sql) 
+        conn.commit()
+    else:
+        return [Plain(text="id:%d is already in group:%d's admin list!"%(adminId,groupId))]
+    cur.close()
+    conn.close()
+    return [Plain(text="id:%d add into group:%d's admin list!"%(adminId,groupId))]
 
 # 返回笑话
 def getJoke(name):
@@ -1086,3 +1169,7 @@ def addCelebrityQuotes(groupId,memberId,content,quoteFormat):
         return [Plain(text="语录添加成功！")]
     except Exception as e:
         return [Plain(text="%s"%e)]
+
+# 从config中获取配置
+def getConfig(config):
+    pass
