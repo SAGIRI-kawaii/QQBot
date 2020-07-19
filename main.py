@@ -1,5 +1,5 @@
 #coding=utf-8
-from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage
+from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage,XmlMessage,LightApp
 from mirai import MemberJoinEvent,MemberLeaveEventKick,MemberLeaveEventQuit,MemberSpecialTitleChangeEvent,MemberSpecialTitleChangeEvent,MemberPermissionChangeEvent,MemberMuteEvent,MemberUnmuteEvent,BotJoinGroupEvent,GroupRecallEvent
 from mirai import exceptions
 # from variable import *
@@ -9,6 +9,7 @@ from itertools import chain
 import threading
 import asyncio
 from function import *
+getEpidemic()
 
 BotQQ =  getConfig("BotQQ")  # 字段 qq 的值 1785007019
 HostQQ = getConfig("HostQQ") #主人QQ
@@ -98,6 +99,9 @@ async def subroutine1(app: Mirai):
 async def event_gm(app: Mirai, friend: Friend, message:MessageChain):
     print("friend Message")
     if friend.id==HostQQ:
+        # await app.sendFriendMessage(friend,[
+        #     LightApp(songOrder(message.toString()))
+        # ])
         if message.toString()[:5]=="发布消息：":
             msg=message.toString().replace("发布消息：","")
             groupList = await app.groupList()

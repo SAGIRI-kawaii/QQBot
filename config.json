@@ -1,6 +1,6 @@
 {
-    "BotQQ" : 123456,
-    "HostQQ" : 123456,
+    "BotQQ" : "",
+    "HostQQ" : "",
     "authKey" : "1234567890",
     "mirai_api_http_locate" : "localhost:8080/",
     "dbHost" : "",
@@ -14,5 +14,6 @@
     "rainbowSrc":"",
     "weatherSrc":"",
     "app_id":"",
-    "app_key":""
+    "app_key":"",
+    "epidemicApicode":""
 }

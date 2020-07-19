@@ -1,5 +1,5 @@
 #coding=utf-8
-from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage
+from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage,LightApp
 from variable import *
 from function import *
 import datetime
@@ -412,7 +412,7 @@ async def Process(message,groupId,sender,memberList):
                                 # pass
                         return picMsg
                     else:
-                        record("%s*%d"%(aim,num),dist,sender,groupId,False,"img")
+                        record("%s*%d"%(aim,num),"none",sender,groupId,False,"img")
                         return [Plain(text="管理最多也只能要5张呐~我可不会被轻易玩儿坏呢！！！！")]
                 elif num <= 5:
                     record("%s*%d"%(aim,num),"none",sender,groupId,False,"img")
@@ -640,11 +640,20 @@ async def Process(message,groupId,sender,memberList):
         print("add admin:%d in group %d"%(target,groupId))
         return addAdmin(groupId,target)
         
-    # 添加管理员处理
-    elif "[At::target=%i] deleteAdmin"%BotQQ in messageText:
-        target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
-        print("delete admin:%d in group %d"%(target,groupId))
-        return addAdmin(groupId,target)
+    # 删除管理员处理
+    # elif "[At::target=%i] deleteAdmin"%BotQQ in messageText:
+    #     target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
+    #     print("delete admin:%d in group %d"%(target,groupId))
+    #     return addAdmin(groupId,target)
+
+    # 获取疫情统计
+    elif messageText=="疫情" or messageText=="疫情统计":
+        return [LightApp(getEpidemic())]
+        
+    # 点歌
+    elif messageText[:3]=="点歌 ":
+        target=messageText[3:]
+        return [LightApp(songOrder(target))]
 
     # 回复@bot（normal,zuanLow,zuanHigh,rainbow）
     elif "[At::target=%i]"%BotQQ in messageText:

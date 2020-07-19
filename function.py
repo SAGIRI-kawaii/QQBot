@@ -1174,3 +1174,138 @@ def addCelebrityQuotes(groupId,memberId,content,quoteFormat):
         return [Plain(text="语录添加成功！")]
     except Exception as e:
         return [Plain(text="%s"%e)]
+
+# 疫情查询
+def getEpidemic():
+    virusSrc="https://api.yonyoucloud.com/apis/dst/ncov/country"
+    headers={"authoration":"apicode","apicode":getConfig("epidemicApicode")}
+    response=requests.get(virusSrc,headers=headers)
+    dataJson=response.json()
+    # print(dataJson)
+    confirmedCount=dataJson["data"]["confirmedCount"]
+    confirmedAdd=dataJson["data"]["confirmedAdd"]
+    suspectedCount=dataJson["data"]["suspectedCount"]
+    suspectedAdd=dataJson["data"]["suspectedAdd"]
+    curedCount=dataJson["data"]["curedCount"]
+    curedAdd=dataJson["data"]["curedAdd"]
+    deadCount=dataJson["data"]["deadCount"]
+    deathAdd=dataJson["data"]["deathAdd"]
+    updateTime=dataJson["data"]["updateTime"]
+    sourceDesc=dataJson["data"]["sourceDesc"]
+    description=dataJson["data"]["description"]
+    virus=re.findall(r'病毒: (.*?);',description,re.S)[0]
+    sourceOfInfection=re.findall(r'传染源: (.*?);',description,re.S)[0]
+    wayForSpreading=re.findall(r'传播途径: (.*?);',description,re.S)[0]
+    susceptiblePopulation=re.findall(r'易感人群： (.*?);',description,re.S)[0]
+    incubationPeriod=re.findall(r'潜伏期： (.*?);',description,re.S)[0]
+    host=re.findall(r'宿主： (.*?)',description,re.S)[0]
+    Json="""
+    {
+        "app":"com.tencent.miniapp",
+        "desc":"",
+        "view":"notification",
+        "ver":"0.0.0.1",
+        "prompt":"[疫情统计]",
+        "appID":"",
+        "sourceName":"",
+        "actionData":"",
+        "actionData_A":"",
+        "sourceUrl":"",
+        "meta":{
+            "notification":{
+                "appInfo":{
+                    "appName":"全国疫情数据统计",
+                    "appType":4,
+                    "appid":1109659848,
+                    "iconUrl":"http://gchat.qpic.cn/gchatpic_new/719328335/-2010394141-6383A777BEB79B70B31CE250142D740F/0"
+                },
+                "data":[
+                    {
+                        "title":"确诊",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"新增确诊",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"疑似",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"新增疑似",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"治愈",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"新增治愈",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"死亡",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"新增死亡",
+                        "value":"%d"
+                    }],
+                "title":"中国加油!",
+                "emphasis_keyword":""
+            }
+        },
+        "text":"",
+        "sourceAd":""
+    }"""%(confirmedCount,confirmedAdd,suspectedCount,suspectedAdd,curedCount,curedAdd,deadCount,deathAdd)
+    # print(Json)
+    return Json
+
+# 点歌
+def songOrder(songName):
+    songSearchSrc="http://music.163.com/api/search/get/web?csrf_token=hlpretag=&hlposttag=&s={%s}&type=1&offset=0&total=true&limit=1"%songName
+    response=requests.get(songSearchSrc)
+    dataJson=response.json()
+    Id=dataJson["result"]["songs"][0]["id"]
+    detailSrc="http://musicapi.leanapp.cn/song/detail?ids=%d"%Id
+    response=requests.get(detailSrc)
+    dataJson=response.json()
+    name=dataJson["songs"][0]["name"]
+    picUrl=dataJson["songs"][0]["al"]["picUrl"]
+    name=dataJson["songs"][0]["name"]
+    desc=dataJson["songs"][0]["ar"][0]["name"]
+    Json="""
+    {
+        "config":{
+            "autosize":true,
+            "ctime":1595171310,
+            "type":"normal",
+            "forward":true,
+            "token":"f55af0d5746b18b3d142bfd9a80f9de5"
+        },
+        "prompt":"[分享]%s",
+        "app":"com.tencent.structmsg",
+        "ver":"0.0.0.1",
+        "view":"music",
+        "meta":{
+            "music":{
+                "appid":100495085,
+                "preview":"%s",
+                "android_pkg_name":"",
+                "musicUrl":"http:\/\/music.163.com\/song\/media\/outer\/url?id=%d",
+                "sourceMsgId":"0",
+                "desc":"%s",
+                "title":"%s",
+                "action":"",
+                "source_url":"",
+                "tag":"假装自己是网易云音乐的屑机器人",
+                "jumpUrl":"http:\/\/music.163.com\/song\/%d",
+                "app_type":1,
+                "source_icon":""
+            }
+        },
+        "desc":"音乐"
+    }
+    """%(name,picUrl,Id,desc,name,Id)
+    return Json

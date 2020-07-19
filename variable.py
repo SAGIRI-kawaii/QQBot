@@ -46,6 +46,7 @@ zuanLowSrc=getConfig("zuanLowSrc")             #祖安（Low）api地址"
 rainbowSrc=getConfig("rainbowSrc")             #彩虹屁api地址
 searchSrc="https://saucenao.com/"              #搜图网址
 weatherSrc=getConfig("weatherSrc")             #天气api地址
+virusSrc="https://api.yonyoucloud.com/apis/dst/ncov/country"
 
 setuDist="M:\\Pixiv\\pxer_new\\"                                    #setu存储路径
 setu18Dist="M:\\Pixiv\\pxer18_new\\"                                #setuR18存储路径
