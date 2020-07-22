@@ -556,7 +556,7 @@ async def Process(message,groupId,sender,memberList):
     
     # 上贡图片Judge
     elif message.hasComponent(Image) and getSetting(groupId,"tribute") and getReady(groupId,sender,"tributeReady"):
-        setReady(groupId,sender,False,"tributeready")
+        # setReady(groupId,sender,False,"tributeready")
         print("judging")
         img = message.getFirstComponent(Image)
         result=judgeImageYellow(groupId,sender,img.url,tributeDist)
@@ -655,7 +655,7 @@ async def Process(message,groupId,sender,memberList):
     # 开始上贡
     elif messageText=="开始上贡":
         if int(getTributeInfo(sender,"tributeCount"))>=int(getSetting(groupId,"tributeQuantity")):
-            # setReady(groupId,sender,False,"tributeready")
+            setReady(groupId,sender,False,"tributeready")
             return [
                 At(target=sender),
                 Plain(text="你这个月已经发够%s张符合标准的图了呐~可以不用发啦~"%getSetting(groupId,"tributeQuantity"))
