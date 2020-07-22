@@ -310,7 +310,7 @@ async def Process(message,groupId,sender,memberList):
                     Plain(text="啊嘞嘞~你还不是VIP哦~不能使用setu功能呐~\n"),
                     Plain(text="快来完成每月指标吧~\n"),
                     Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
-                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
                 ]
 
             if getSetting(groupId,"countLimit"):                   #如果有每分钟调用次数限制
@@ -324,7 +324,7 @@ async def Process(message,groupId,sender,memberList):
                     Plain(text="啊嘞嘞~你还不是VIP哦~不能使用setu功能呐~\n"),
                     Plain(text="快来完成每月指标吧~\n"),
                     Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
-                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
                 ]
 
             if getSetting(groupId,"setuLocal"):           #是否为本地库
@@ -372,7 +372,7 @@ async def Process(message,groupId,sender,memberList):
                     Plain(text="啊嘞嘞~你还不是VIP哦~不能使用real功能呐~\n"),
                     Plain(text="快来完成每月指标吧~\n"),
                     Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
-                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
                 ]
 
             if getSetting(groupId,"countLimit"):                   #如果有每分钟调用次数限制
@@ -407,7 +407,7 @@ async def Process(message,groupId,sender,memberList):
                 Plain(text="啊嘞嘞~你还不是VIP哦~不能使用bizhi功能呐~\n"),
                 Plain(text="快来完成每月指标吧~\n"),
                 Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
-                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
             ]
 
         # else:
@@ -487,7 +487,7 @@ async def Process(message,groupId,sender,memberList):
                 Plain(text="啊嘞嘞~你还不是VIP哦~不能使用搜图功能呐~\n"),
                 Plain(text="快来完成每月指标吧~\n"),
                 Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
-                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
             ]
 
         setReady(groupId,sender,True,"searchReady")
@@ -514,7 +514,7 @@ async def Process(message,groupId,sender,memberList):
                 Plain(text="啊嘞嘞~你还不是VIP哦~不能使用图片预测功能呐~\n"),
                 Plain(text="快来完成每月指标吧~\n"),
                 Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
-                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
             ]
 
         setReady(groupId,sender,True,"PredictReady")
@@ -541,7 +541,7 @@ async def Process(message,groupId,sender,memberList):
                 Plain(text="啊嘞嘞~你还不是VIP哦~不能使用涩度评价功能呐~\n"),
                 Plain(text="快来完成每月指标吧~\n"),
                 Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
-                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
             ]
 
         setReady(groupId,sender,True,"yellowPredictReady")
@@ -591,7 +591,7 @@ async def Process(message,groupId,sender,memberList):
                 return [
                     At(target=sender),
                     Plain(text="恭喜~这张图通过了测试呐~\n"),
-                    Plain(text="本月目标%d张，现在已经传了%d张呐~"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount"))),
+                    Plain(text="本月目标%d张，现在已经传了%d张呐~\n"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount"))),
                     Plain(text="你已获得VIP身份辣~\n"),
                     Plain(text="VIP从现在开始到%s哦"%end)
                 ]
@@ -600,8 +600,8 @@ async def Process(message,groupId,sender,memberList):
                 return [
                     At(target=sender),
                     Plain(text="恭喜~这张图通过了测试呐~\n"),
-                    Plain(text="本月目标%d张，现在已经传了%d张呐~"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount"))),
-                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                    Plain(text="本月目标%d张，现在已经传了%d张呐~\n"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount"))),
+                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
                 ]
         else:
             code=getData("searchCount")
@@ -618,8 +618,8 @@ async def Process(message,groupId,sender,memberList):
                 result[5],
                 Plain(text="\n评判标准为：\n"),
                 Plain(text="Normal<=60 or Hot>50 or Sexy>50 or Total>20\n"),
-                Plain(text="再找些别的图吧~"),
-                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                Plain(text="再找些别的图吧~\n"),
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
             ]
         
     
