@@ -29,6 +29,18 @@ CREATE TABLE `admin` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `americajokes`
+--
+
+DROP TABLE IF EXISTS `americajokes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `americajokes` (
+  `text` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `blacklist`
 --
 
@@ -58,7 +70,8 @@ CREATE TABLE `calledcount` (
   `botSetuCount` int NOT NULL,
   `dialsCount` int NOT NULL,
   `predictCount` int DEFAULT NULL,
-  `yellowPredictCount` int DEFAULT NULL
+  `yellowPredictCount` int DEFAULT NULL,
+  `quotesCount` bigint DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -129,6 +142,18 @@ CREATE TABLE `clockchoice` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `frenchjokes`
+--
+
+DROP TABLE IF EXISTS `frenchjokes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `frenchjokes` (
+  `text` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `functioncalled`
 --
 
@@ -141,6 +166,20 @@ CREATE TABLE `functioncalled` (
   `sender` bigint DEFAULT NULL,
   `groupId` bigint DEFAULT NULL,
   `result` tinyint(1) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `imagehash`
+--
+
+DROP TABLE IF EXISTS `imagehash`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `imagehash` (
+  `dir` text,
+  `class` text,
+  `imageHash` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -185,6 +224,20 @@ CREATE TABLE `memberpiccount` (
   `memberId` bigint DEFAULT NULL,
   `time` datetime DEFAULT NULL,
   `count` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `nickname`
+--
+
+DROP TABLE IF EXISTS `nickname`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `nickname` (
+  `groupId` bigint DEFAULT NULL,
+  `memberId` bigint DEFAULT NULL,
+  `nickname` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -239,9 +292,54 @@ CREATE TABLE `setting` (
   `imgPredict` tinyint(1) DEFAULT NULL,
   `yellowPredict` tinyint(1) DEFAULT NULL,
   `imgLightning` tinyint(1) DEFAULT NULL,
+  `listen` tinyint(1) DEFAULT '0',
+  `tribute` tinyint(1) DEFAULT '0',
+  `tributeQuantity` int DEFAULT '10',
   `speakMode` char(10) DEFAULT NULL,
   `switch` char(10) DEFAULT NULL,
   `forbiddenCount` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `sovietjokes`
+--
+
+DROP TABLE IF EXISTS `sovietjokes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `sovietjokes` (
+  `text` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tributeready`
+--
+
+DROP TABLE IF EXISTS `tributeready`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tributeready` (
+  `groupId` bigint DEFAULT NULL,
+  `memberId` bigint DEFAULT NULL,
+  `status` tinyint(1) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tributes`
+--
+
+DROP TABLE IF EXISTS `tributes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tributes` (
+  `memberId` bigint DEFAULT NULL,
+  `startTime` datetime DEFAULT NULL,
+  `endTime` datetime DEFAULT NULL,
+  `tributeCount` int DEFAULT '0',
+  `VIP` tinyint(1) DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -268,4 +366,4 @@ CREATE TABLE `yellowpredictready` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-07-18  3:18:06
+-- Dump completed on 2020-07-23  2:45:20
