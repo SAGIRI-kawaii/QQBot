@@ -1427,7 +1427,7 @@ def imgSimilarJudge(tImgHash,path):
 
 # 将新图片哈希值存入数据库
 def insertHash(path,imageHash,pathClass):
-    conn = pymysql.connect(host="127.0.0.1", user="root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     try:
         sql = "insert into ImageHash (dir,imageHash,class) values ('%s','%s','%s')"%(pymysql.escape_string(path),imageHash,pathClass)
@@ -1437,3 +1437,5 @@ def insertHash(path,imageHash,pathClass):
         pass
     conn.close()
     cur.close()
+
+# 判断VIP资格是否到期
