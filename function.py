@@ -2,7 +2,6 @@
 from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage
 import os, random, shutil
 from os.path import join, getsize
-from variable import *
 from PIL import Image as IMG
 from io import BytesIO
 import re
@@ -17,6 +16,8 @@ from urllib.parse import quote
 from pynvml import *
 import base64
 import io
+from variable import *
+import imagehash
 
 # 从config中获取配置
 def getConfig(config):
@@ -70,6 +71,8 @@ def updateData(data,operationType):
         sql = "UPDATE calledCount SET predictCount=%d"%data
     elif operationType=='yellow':
         sql = "UPDATE calledCount SET yellowPredictCount=%d"%data
+    elif operationType=='quotes':
+        sql = "UPDATE calledCount SET quotesCount=%d"%data
     else:
         print("error: none operationType named %s!"%operationType)
         return
@@ -80,8 +83,6 @@ def updateData(data,operationType):
 
 # 日志记录
 def record(operation,picUrl,sender,groupId,result,operationType):
-    responseCalled=getData("responseCalled")+1
-    updateData(responseCalled,"response")
     timeNow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(timeNow)
     conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
@@ -210,16 +211,16 @@ def getAdmin(groupId):
     conn.close()
     return admin
 
-# 是否要搜图
-def getSearchReady(groupId,sender):
+# 是否要对图片做响应
+def getReady(groupId,sender,targetDB):
     conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
-    sql = "SELECT `status` from searchReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
+    sql = "SELECT `status` from %s WHERE groupId=%d and memberId=%d"%(targetDB,groupId,sender)
     cur.execute(sql) 
     try:
         result=cur.fetchone()[0]
     except TypeError:
-        sql="INSERT INTO searchReady (groupId,memberId,`status`) VALUES (%d,%d,%d)"%(groupId,sender,False)
+        sql="INSERT INTO %s (groupId,memberId,`status`) VALUES (%d,%d,%d)"%(targetDB,groupId,sender,False)
         cur.execute(sql) 
         conn.commit()
         return False
@@ -227,86 +228,18 @@ def getSearchReady(groupId,sender):
     conn.close()
     return result
 
-# 是否要预测
-def getPredictReady(groupId,sender):
+# 修改判断状态
+def setReady(groupId,sender,status,targetDB):
     conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
-    sql = "SELECT `status` from predictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
+    sql = "SELECT `status` from %s WHERE groupId=%d and memberId=%d"%(targetDB,groupId,sender)
     cur.execute(sql) 
     try:
         result=cur.fetchone()[0]
-    except TypeError:
-        sql="INSERT INTO predictReady (groupId,memberId,`status`) VALUES (%d,%d,%d)"%(groupId,sender,False)
-        cur.execute(sql) 
-        conn.commit()
-        return False
-    cur.close()
-    conn.close()
-    return result
-    
-# 是否要评价黄图
-def getYellowPredictReady(groupId,sender):
-    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
-    cur = conn.cursor()
-    sql = "SELECT `status` from yellowPredictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
-    cur.execute(sql) 
-    try:
-        result=cur.fetchone()[0]
-    except TypeError:
-        sql="INSERT INTO yellowPredictReady (groupId,memberId,`status`) VALUES (%d,%d,%d)"%(groupId,sender,False)
-        cur.execute(sql) 
-        conn.commit()
-        return False
-    cur.close()
-    conn.close()
-    return result
-
-# 修改搜图判断状态
-def setSearchReady(groupId,sender,status):
-    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
-    cur = conn.cursor()
-    sql = "SELECT `status` from searchReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
-    cur.execute(sql) 
-    try:
-        result=cur.fetchone()[0]
-        sql="UPDATE searchReady SET `status`=%d WHERE groupId=%d and memberId=%d"%(status,groupId,sender)
+        sql="UPDATE %s SET `status`=%d WHERE groupId=%d and memberId=%d"%(targetDB,status,groupId,sender)
         cur.execute(sql) 
     except TypeError:
-        sql="INSERT INTO searchReady (groupId,memberId,Status) VALUES (%d,%d,%d)"%(groupId,sender,status)
-        cur.execute(sql) 
-    cur.close()
-    conn.commit()
-    conn.close()
-
-# 修改预测图片判断状态
-def setPredictReady(groupId,sender,status):
-    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
-    cur = conn.cursor()
-    sql = "SELECT `status` from predictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
-    cur.execute(sql) 
-    try:
-        result=cur.fetchone()[0]
-        sql="UPDATE predictReady SET `status`=%d WHERE groupId=%d and memberId=%d"%(status,groupId,sender)
-        cur.execute(sql) 
-    except TypeError:
-        sql="INSERT INTO predictReady (groupId,memberId,Status) VALUES (%d,%d,%d)"%(groupId,sender,status)
-        cur.execute(sql) 
-    cur.close()
-    conn.commit()
-    conn.close()
-
-# 修改评价黄图判断状态
-def setYellowPredictReady(groupId,sender,status):
-    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
-    cur = conn.cursor()
-    sql = "SELECT `status` from yellowPredictReady WHERE groupId=%d and memberId=%d"%(groupId,sender)
-    cur.execute(sql) 
-    try:
-        result=cur.fetchone()[0]
-        sql="UPDATE yellowPredictReady SET `status`=%d WHERE groupId=%d and memberId=%d"%(status,groupId,sender)
-        cur.execute(sql) 
-    except TypeError:
-        sql="INSERT INTO yellowPredictReady (groupId,memberId,Status) VALUES (%d,%d,%d)"%(groupId,sender,status)
+        sql="INSERT INTO %s (groupId,memberId,Status) VALUES (%d,%d,%d)"%(targetDB,groupId,sender,status)
         cur.execute(sql) 
     cur.close()
     conn.commit()
@@ -375,7 +308,7 @@ def askSth(sender,question):
 
 # 图片搜索
 def searchImage(groupId,sender,img):
-    setSearchReady(groupId,sender,False)
+    setReady(groupId,sender,False,"searchReady")
     searchCount=getData("searchCount")+1
     print(searchCount)
     updateData(searchCount,"search")
@@ -622,6 +555,10 @@ def configChangeJudge(config,change):
         return True
     elif config=="countLimit" and change==True or change==False:
         return True
+    elif config=="tribute" and change==True or change==False:
+        return True
+    elif config=="listen" and change==True or change==False:
+        return True
     elif (config=="setu" or config=="real" or config=="bizhi" or config=="r18" or config=="search" or config=="imgPredict" or config=="imgLightning") and change==True or change==False:
         return True
     elif config=="speakMode" and change=="normal" or change=="zuanHigh" or change=="zuanLow" or change=="rainbow" or change=="chat":
@@ -787,6 +724,8 @@ def getMemberPicStatus(groupId,sender):
 
 # qq号转名字
 def qq2name(memberList,qq):
+    if qq==0:
+        return "public"
     for i in memberList:
         if i.id==qq:
             return i.memberName
@@ -1013,13 +952,12 @@ def base_64(pic_path):
         return coding.decode()
 
 # 图片鉴黄
-def judgeImageYellow(groupId,sender,img_url):
-    setYellowPredictReady(groupId,sender,False)
+def judgeImageYellow(groupId,sender,img_url,saveDir):
+    setReady(groupId,sender,False,"yellowPredictReady")
     yellowPredictCount=getData("searchCount")+1
     # print(yellowPredictCount)
     updateData(yellowPredictCount,"search")
-    yellowJudgeDist="M:\pixiv\\yellowJudge\\"
-    dist="%s%s.png"%(yellowJudgeDist,yellowPredictCount)
+    dist="%s%s.png"%(saveDir,yellowPredictCount)
     img_content=requests.get(img_url).content
     image=IMG.open(BytesIO(img_content))
     image.save(dist)
@@ -1045,12 +983,14 @@ def judgeImageYellow(groupId,sender,img_url):
     # print(r.text)
     print(r.text)
     if r.json()["ret"]>0:
+        record("yellowJudge",dist,sender,groupId,0,"img")
         return [
         At(target=sender),
         Plain("Error!:\nReason:"),
         Plain(text="%s"%r.json()["msg"])
         ]
     elif r.json()["ret"]==0:
+        record("yellowJudge",dist,sender,groupId,1,"img")
         return [
             At(target=sender),
             Plain("\nPossiblity Result:\n"),
@@ -1096,22 +1036,16 @@ def addAdmin(groupId,adminId):
     conn.close()
     return [Plain(text="id:%d add into group:%d's admin list!"%(adminId,groupId))]
 
-# 添加管理员
+# 删除管理员
 def deleteAdmin(groupId,adminId):
     conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
-    sql = "select adminId from admin where groupId=%d and adminId=%d"%(groupId,adminId)
+    sql = "delete from admin where groupId=%d and adminId=%d"%(groupId,adminId)
     cur.execute(sql) 
     admin = cur.fetchone()
-    if admin==None:
-        sql = "insert into admin (groupId,adminId) values (%d,%d)"%(groupId,adminId)
-        cur.execute(sql) 
-        conn.commit()
-    else:
-        return [Plain(text="id:%d is already in group:%d's admin list!"%(adminId,groupId))]
     cur.close()
     conn.close()
-    return [Plain(text="id:%d add into group:%d's admin list!"%(adminId,groupId))]
+    return [Plain(text="id:%d deleted from group:%d's admin list!"%(adminId,groupId))]
 
 # 返回笑话
 def getJoke(name):
@@ -1132,33 +1066,93 @@ def getJoke(name):
         joke=joke.replace("\n","")
         return [Plain(text=joke)]
 
-# 返回群语录
-def getCelebrityQuotes(groupId,memberList):
+# 返回特殊关键词笑话
+def getKeyJoke(key):
     conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
-    sql = "select * from celebrityQuotes where groupId=%d order by rand() limit 1"%groupId
+    sql = "select * from %sJokes order by rand() limit 1"%key
     cur.execute(sql) 
-    quotes = cur.fetchone()
-    # print(quotes)
-    if quotes==None:
+    joke = cur.fetchone()
+    if joke==(None,):
         cur.close()
         conn.close()
-        return [Plain(text="本群还没有群语录哟~快来添加吧~")]
+        return [Plain(text="笑话数据库为空！")]
     else:
-        memberId=quotes[1]      # 说出名言的人
-        content=quotes[2]       # 内容，可能为地址/文本
-        quoteFormat=quotes[3]   # 语录形式 img/text
         cur.close()
         conn.close()
-        if quoteFormat=="text":
-            return [
-                Plain(text=content),
-                Plain(text="\n————%s"%qq2name(memberList,memberId))
-            ]
-        elif quoteFormat=="img":
-            return [Image.fromFileSystem(content)]
+        joke=joke[0]
+        print(joke)
+        return [Plain(text=joke)]
+
+# 返回群语录
+def getCelebrityQuotes(groupId,memberList,nickname,Type):
+    if Type=="random":
+        conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+        cur = conn.cursor()
+        sql = "select * from celebrityQuotes where groupId=%d order by rand() limit 1"%groupId
+        cur.execute(sql) 
+        quotes = cur.fetchone()
+        # print(quotes)
+        if quotes==None:
+            cur.close()
+            conn.close()
+            return [Plain(text="本群还没有群语录哟~快来添加吧~")]
         else:
-            return [Plain(text="quoteFormat error!(%s)"%quoteFormat)]
+            memberId=quotes[1]      # 说出名言的人
+            content=quotes[2]       # 内容，可能为地址/文本
+            quoteFormat=quotes[3]   # 语录形式 img/text
+            cur.close()
+            conn.close()
+            if quoteFormat=="text":
+                return [
+                    Plain(text=content),
+                    Plain(text="\n————%s"%qq2name(memberList,memberId))
+                ]
+            elif quoteFormat=="img":
+                return [
+                    # At(target=memberId),
+                    Image.fromFileSystem(content)
+                    # Plain(text="\n————%s"%qq2name(memberList,memberId))
+                ]
+            else:
+                return [Plain(text="quoteFormat error!(%s)"%quoteFormat)]
+    else:
+        conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+        cur = conn.cursor()
+        sql = "select memberId from nickname where groupId=%d and nickname='%s'"%(groupId,nickname[0])
+        cur.execute(sql)
+        memberId = cur.fetchone()
+        # print(quotes)
+        if memberId==None:
+            cur.close()
+            conn.close()
+            return [Plain(text="%s是谁我不知道呐~快来添加别名吧~"%nickname[0])]
+        else:
+            sql = "select * from celebrityQuotes where groupId=%d and memberId=%d order by rand() limit 1"%(groupId,memberId[0])
+            cur.execute(sql) 
+            quotes = cur.fetchone()
+            cur.close()
+            conn.close()
+            if quotes==None:
+                cur.close()
+                conn.close()
+                return [Plain(text="%s还没有语录哦~快来添加吧~"%nickname[0])]
+            content=quotes[2]       # 内容，可能为地址/文本
+            quoteFormat=quotes[3]   # 语录形式 img/text
+            if quoteFormat=="text":
+                return [
+                    Plain(text=content),
+                    Plain(text="\n————%s"%nickname[0])
+                ]
+            elif quoteFormat=="img":
+                return [
+                    # At(target=memberId),
+                    Image.fromFileSystem(content)
+                    # Plain(text="\n————%s"%qq2name(memberList,memberId))
+                ]
+            else:
+                return [Plain(text="quoteFormat error!(%s)"%quoteFormat)]
+
 
 # 添加群语录
 def addCelebrityQuotes(groupId,memberId,content,quoteFormat):
@@ -1175,12 +1169,42 @@ def addCelebrityQuotes(groupId,memberId,content,quoteFormat):
     except Exception as e:
         return [Plain(text="%s"%e)]
 
+# 添加别名
+def addNickname(groupId,memberId,nickname):
+    try:
+        conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+        cur = conn.cursor()
+        sql = """INSERT INTO nickname (groupId, memberId, nickname) SELECT
+                    %d, %d, '%s'
+                FROM
+                    DUAL
+                WHERE
+                    NOT EXISTS (
+                        SELECT
+                            groupId, memberId, nickname
+                        FROM
+                            nickname
+                        WHERE
+                        groupId = %d
+                        AND nickname = '%s')"""%(groupId,memberId,nickname,groupId,nickname)
+        cur.execute(sql) 
+        cur.close()
+        conn.commit()
+        conn.close()
+        return [Plain(text="别名添加成功！")]
+    except Exception as e:
+        return [Plain(text="%s"%e)]
+
 # 疫情查询
 def getEpidemic():
     virusSrc="https://api.yonyoucloud.com/apis/dst/ncov/country"
+    # virusSrc="https://c.m.163.com/ug/api/wuhan/app/data/list-total"
     headers={"authoration":"apicode","apicode":getConfig("epidemicApicode")}
     response=requests.get(virusSrc,headers=headers)
-    dataJson=response.json()
+    try:
+        dataJson=response.json()
+    except TypeError:
+        return "Song not found!"
     # print(dataJson)
     confirmedCount=dataJson["data"]["confirmedCount"]
     confirmedAdd=dataJson["data"]["confirmedAdd"]
@@ -1251,6 +1275,10 @@ def getEpidemic():
                     {
                         "title":"新增死亡",
                         "value":"%d"
+                    },
+                    {
+                        "title":"更新时间",
+                        "value":"%s"
                     }],
                 "title":"中国加油!",
                 "emphasis_keyword":""
@@ -1258,7 +1286,7 @@ def getEpidemic():
         },
         "text":"",
         "sourceAd":""
-    }"""%(confirmedCount,confirmedAdd,suspectedCount,suspectedAdd,curedCount,curedAdd,deadCount,deathAdd)
+    }"""%(confirmedCount,confirmedAdd,suspectedCount,suspectedAdd,curedCount,curedAdd,deadCount,deathAdd,updateTime)
     # print(Json)
     return Json
 
@@ -1309,3 +1337,103 @@ def songOrder(songName):
     }
     """%(name,picUrl,Id,desc,name,Id)
     return Json
+
+# 查询上贡信息
+def getTributeInfo(memberId,target):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "SELECT %s from tributes WHERE memberId=%d"%(target,memberId)
+    cur.execute(sql) 
+    try:
+        result=cur.fetchone()[0]
+    except TypeError:
+        sql="INSERT INTO tributes (memberId, tributeCount, VIP) VALUES (%d,%d,%d)"%(memberId,0,False)
+        cur.execute(sql) 
+        conn.commit()
+        if target=="VIP":
+            return False
+        elif target=="tributeCount":
+            return 0
+        elif target=="startTime" or target=="endTime":
+            return datetime.strptime('Apr-27-00 20:12:56','%b-%d-%y %H:%M:%S')
+    cur.close()
+    conn.close()
+    return result
+    
+# 修改上贡信息
+def setTributeInfo(sender,status,target):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "SELECT * from tributes WHERE memberId=%d"%sender
+    cur.execute(sql) 
+    try:
+        result=cur.fetchone()[0]
+        if target=="tributeCount":
+            sql="UPDATE tributes SET tributeCount=%d WHERE memberId=%d"%(status,sender)
+        elif target=="VIP":
+            sql="UPDATE tributes SET VIP=%d WHERE memberId=%d"%(status,sender)
+        elif target=="startTime":
+            sql="UPDATE tributes SET startTime='%s' WHERE memberId=%d"%(status,sender)
+        elif target=="endTime":
+            sql="UPDATE tributes SET endTime='%s' WHERE memberId=%d"%(status,sender)
+        cur.execute(sql) 
+    except TypeError:
+        sql="INSERT INTO tributes (memberId, tributeCount, VIP) VALUES (%d,%d,%d)"%(sender,0,0)
+        cur.execute(sql) 
+    cur.close()
+    conn.commit()
+    conn.close()
+
+# 图片哈希
+def imgHash(img_path):
+  """
+  图片哈希（类似：4f999cc90979704c）
+  :param img_path: 图片路径
+  :return: <class 'imagehash.ImageHash'>
+  """
+  img1 = IMG.open(img_path)
+  res = imagehash.dhash(img1)
+  print(res)
+  return res
+
+# 计算图片汉明距离
+def imgHamm(res1, res2):
+    """
+    汉明距离，汉明距离越小说明越相似，等 0 说明是同一张图片，大于10越上，说明完全不相似
+    :param res1:
+    :param res2:
+    :return:
+    """
+    str1 = str(res1)  # <class 'imagehash.ImageHash'> 转成 str
+    str2 = str(res2)
+    num = 0  # 用来计算汉明距离
+    for i in range(len(str1)):
+        if str1[i] != str2[i]:
+            num += 1
+    return num
+
+# 图片相似度判断
+def imgSimilarJudge(tImgHash,path):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql="select imageHash from imageHash where class='%s'"%path
+    cur.execute(sql) 
+    data = cur.fetchall()
+    Hash=list(chain.from_iterable(data))
+    for i in Hash:
+        if imgHamm(i,tImgHash)<=12:
+            return (True,imgHamm(i,tImgHash))
+    return (False,"none")
+
+# 将新图片哈希值存入数据库
+def insertHash(path,imageHash,pathClass):
+    conn = pymysql.connect(host="127.0.0.1", user="root", passwd="duyifan2004", db="qqbot", port=3306, charset="utf8")
+    cur = conn.cursor()
+    try:
+        sql = "insert into ImageHash (dir,imageHash,class) values ('%s','%s','%s')"%(pymysql.escape_string(path),imageHash,pathClass)
+        cur.execute(sql) 
+        conn.commit()
+    except Exception:
+        pass
+    conn.close()
+    cur.close()

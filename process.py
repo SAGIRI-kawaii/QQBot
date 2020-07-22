@@ -7,6 +7,8 @@ import re
 import requests
 import json
 from VGG16 import predictImage
+from dateutil.relativedelta import relativedelta
+import shutil
 
 adminConfig=["repeat","setu","bizhi","real","speakMode","search"]
 adminCheck=["group","speakMode","countLimit","setu","bizhi","real","r18","search"]
@@ -86,7 +88,7 @@ def wikiProcess(groupId,sender,messageText):
     firstLevelDirectory=["function","management"]
     secondFLevelDirectory=["img","weather","yxh","blhx","ask","translate","speakMode","mute"]
     secondMLevelDirectory=["setting","info"]
-    finalFLevelDirectory={"setu":wikiSetu,"real":wikiReal,"bizhi":wikiBizhi,"search":wikiSearch,"predict":wikiPredict,"weather":wikiWeather,"yxh":wikiYxh,"blhx":wikiBlhx,"ask":wikiAsk,"translate":wikiTranslate,"speakMode":wikiSpeakMode,"mute":wikiMute,"linux":wikiLinux,"quotes":wikiQuotes} 
+    finalFLevelDirectory={"setu":wikiSetu,"real":wikiReal,"bizhi":wikiBizhi,"search":wikiSearch,"predict":wikiPredict,"weather":wikiWeather,"yxh":wikiYxh,"blhx":wikiBlhx,"ask":wikiAsk,"translate":wikiTranslate,"speakMode":wikiSpeakMode,"mute":wikiMute,"linux":wikiLinux,"quotes":wikiQuotes,"music":wikiMusic,"epidemic":wikiEpidemic} 
     finalSLevelDirectory={"setuSetting":setuSetting,"r18Setting":r18Setting,"realSetting":realSetting,"bizhiSetting":bizhiSetting,"searchSetting":searchSetting,"countLimitSetting":countLimitSetting,"limitSetting":limitSetting,"blacklistSetting":blacklistSetting,"repeatSetting":repeatSetting,"speakModeSetting":speakModeSetting}
     finalILevelDirectory={"repeatInfo":repeatInfo,"setuLocalInfo":setuLocalInfo,"bizhiLocalInfo":bizhiLocalInfo,"countLimitInfo":countLimitInfo,"setuInfo":setuInfo,"bizhiInfo":bizhiInfo,"realInfo":realInfo,"r18Info":r18Info,"speakModeInfo":speakModeInfo,"switchInfo":switchInfo,"allInfo":allInfo,"sysInfo":sysInfo,"groupInfo":groupInfo}
     print(messageText)
@@ -116,6 +118,8 @@ def wikiProcess(groupId,sender,messageText):
             Plain(text="8.speakMode(不同回复模式)\n"),
             Plain(text="9.mute(有关禁言的功能)\n"),
             Plain(text="10.quotes(有关群语录)\n"),
+            Plain(text="11.music(有关点歌功能)\n"),
+            Plain(text="12.epidemic(疫情查询功能)\n"),
             Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
             Plain(text="如：@bot wiki:img\n")
         ]
@@ -139,7 +143,7 @@ def wikiProcess(groupId,sender,messageText):
             Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
             Plain(text="如：@bot wiki:linux\n")
         ]
-    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="management":
+    elif messaxt.replace("[At::target=%i] wiki:"%BotQQ,"")=="management":
         return [
             At(target=sender),
             Plain(text="management 下属目录：\n"),
@@ -241,15 +245,20 @@ def wikiProcess(groupId,sender,messageText):
         ]
 
 # func语句处理
-def funcProcess(groupId,sender,func,content,target):
+def funcProcess(groupId,sender,func,content,target,quoteFormat):
     if sender in getAdmin(groupId):
         if func=="addQuote":
-            # print(groupId,target,content,func)
             try:
                 target=re.findall(r'\[At::target=(.*?)\]',target,re.S)[0]
             except:
                 pass
-            return addCelebrityQuotes(groupId,int(target),content,"text")
+            return addCelebrityQuotes(groupId,int(target),content,quoteFormat)
+        elif func=="addNickname":
+            try:
+                target=re.findall(r'\[At::target=(.*?)\]',target,re.S)[0]
+            except:
+                pass
+            return addNickname(groupId,int(target),content)
     else:
         return [
             At(target=sender),
@@ -262,6 +271,9 @@ async def Process(message,groupId,sender,memberList):
     responseCalled=getData("responseCalled")
     responseCalled+=1                               #responseCalled计数
     updateData(responseCalled,"response")
+
+    if sender in blackList:                     #发送人在黑名单中
+        return "noneReply"
 
     # message预处理
     messageText=message.toString()
@@ -285,18 +297,36 @@ async def Process(message,groupId,sender,memberList):
             else:
                 return [Image.fromFileSystem(angryDist)]
         else:
-            if sender in blackList:                     #发送人在黑名单中
-                record("setu","none",sender,groupId,False,"img")
+            # if sender in blackList:                     #发送人在黑名单中
+            #     record("setu","none",sender,groupId,False,"img")
+            #     return [
+            #         At(target=sender),
+            #         Plain(text="要你🐎？大胆妖孽！我一眼就看出来你不是人！大威天龙！世尊地藏！般若诸佛！般若巴麻空！")
+            #     ]
+            
+            if getSetting(groupId,"tribute") and not getTributeInfo(sender,"VIP"):  #是否已完成上贡
                 return [
                     At(target=sender),
-                    Plain(text="要你🐎？大胆妖孽！我一眼就看出来你不是人！大威天龙！世尊地藏！般若诸佛！般若巴麻空！")
+                    Plain(text="啊嘞嘞~你还不是VIP哦~不能使用setu功能呐~\n"),
+                    Plain(text="快来完成每月指标吧~\n"),
+                    Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
+                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
                 ]
-            
+
             if getSetting(groupId,"countLimit"):                   #如果有每分钟调用次数限制
                 if not getMemberPicStatus(groupId,sender):
                     record("setu","none",sender,groupId,False,"img")
                     return [Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))]
-            
+
+            if getSetting(groupId,"tribute") and not getTributeInfo(sender,"VIP"):  #是否已完成上贡
+                return [
+                    At(target=sender),
+                    Plain(text="啊嘞嘞~你还不是VIP哦~不能使用setu功能呐~\n"),
+                    Plain(text="快来完成每月指标吧~\n"),
+                    Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
+                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                ]
+
             if getSetting(groupId,"setuLocal"):           #是否为本地库
                 if getSetting(groupId,"imgLightning") and randomJudge():
                     record("setu","lightning",sender,groupId,False,"img")
@@ -332,10 +362,19 @@ async def Process(message,groupId,sender,memberList):
             else:
                 return [Image.fromFileSystem(angryDist)]
         else:
-            if sender in blackList:                     #发送人在黑名单中
-                record("real",dist,sender,groupId,False,"img")
-                return [Plain(text="要要要你🐎？大胆妖孽！我一眼就看出来你不是人！大威天龙！世尊地藏！般若诸佛！般若巴麻空！")]
-            
+            # if sender in blackList:                     #发送人在黑名单中
+            #     record("real",dist,sender,groupId,False,"img")
+            #     return [Plain(text="要要要你🐎？大胆妖孽！我一眼就看出来你不是人！大威天龙！世尊地藏！般若诸佛！般若巴麻空！")]
+
+            if getSetting(groupId,"tribute") and not getTributeInfo(sender,"VIP"):  #是否已完成上贡
+                return [
+                    At(target=sender),
+                    Plain(text="啊嘞嘞~你还不是VIP哦~不能使用real功能呐~\n"),
+                    Plain(text="快来完成每月指标吧~\n"),
+                    Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
+                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                ]
+
             if getSetting(groupId,"countLimit"):                   #如果有每分钟调用次数限制
                 if not getMemberPicStatus(groupId,sender):
                     record("real","none",sender,groupId,False,"img")
@@ -343,6 +382,7 @@ async def Process(message,groupId,sender,memberList):
                         At(target=sender),
                         Plain(text="你已达到限制，每分钟最多只能要%d张setu/real哦~\n歇会儿再来吧！"%getSetting(groupId,"limit"))
                     ]
+
             if getSetting(groupId,"imgLightning") and randomJudge():
                 record("real","lightning",sender,groupId,False,"img")
                 return "lightningPic"
@@ -360,10 +400,20 @@ async def Process(message,groupId,sender,memberList):
         if not getSetting(groupId,"bizhi"):                    #本群禁止要bizhi
             record("bizhi","none",sender,groupId,False,"img")
             return [Plain(text="bizhi功能被关闭了呐>^<,想打开的话联系下管理员呐~")]
-        else:
-            if sender in blackList:                     #发送人在黑名单中
-                record("bizhi",dist,sender,groupId,False,"img")
-                return [Plain(text="要要要你🐎？大胆妖孽！我一眼就看出来你不是人！大威天龙！世尊地藏！般若诸佛！般若巴麻空！")]
+        
+        if getSetting(groupId,"tribute") and not getTributeInfo(sender,"VIP"):  #是否已完成上贡
+            return [
+                At(target=sender),
+                Plain(text="啊嘞嘞~你还不是VIP哦~不能使用bizhi功能呐~\n"),
+                Plain(text="快来完成每月指标吧~\n"),
+                Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+            ]
+
+        # else:
+            # if sender in blackList:                     #发送人在黑名单中
+            #     record("bizhi",dist,sender,groupId,False,"img")
+            #     return [Plain(text="要要要你🐎？大胆妖孽！我一眼就看出来你不是人！大威天龙！世尊地藏！般若诸佛！般若巴麻空！")]
         dist=randomPic(bizhiDist)
         print("本地bizhi图片地址：",dist)
         record("bizhi",dist,sender,groupId,True,"img")
@@ -392,16 +442,16 @@ async def Process(message,groupId,sender,memberList):
         else:
             try:
                 num=int(message.toString()[5:])
-                if aim=="setu":
-                    setuCalled=getData("setuCalled")
-                    setuCalled+=num
-                    updateData(setuCalled,"setu")
-                else:
-                    realCalled=getData("realCalled")
-                    realCalled+=num
-                    updateData(realCalled,"real")
                 if sender in getAdmin(groupId):
                     if sender == HostQQ or num <= 5:
+                        if aim=="setu":
+                            setuCalled=getData("setuCalled")
+                            setuCalled+=num
+                            updateData(setuCalled,"setu")
+                        else:
+                            realCalled=getData("realCalled")
+                            realCalled+=num
+                            updateData(realCalled,"real")
                         picMsg=[]
                         for i in range(num):
                             # if setting[groupId]["setuLocal"]:
@@ -430,12 +480,22 @@ async def Process(message,groupId,sender,memberList):
                 At(target=sender),
                 Plain(text="搜图功能关闭了呐~想要打开就联系机器人管理员吧~")
             ]
-        setSearchReady(groupId,sender,True)
+        
+        if getSetting(groupId,"tribute") and not getTributeInfo(sender,"VIP"):  #是否已完成上贡
+            return [
+                At(target=sender),
+                Plain(text="啊嘞嘞~你还不是VIP哦~不能使用搜图功能呐~\n"),
+                Plain(text="快来完成每月指标吧~\n"),
+                Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+            ]
+
+        setReady(groupId,sender,True,"searchReady")
         return [
             At(target=sender),
             Plain(text="请发送要搜索的图片呐~")
         ]
-    elif message.hasComponent(Image) and getSetting(groupId,"search") and getSearchReady(groupId,sender):
+    elif message.hasComponent(Image) and getSetting(groupId,"search") and getReady(groupId,sender,"searchReady"):
         print("searching")
         img = message.getFirstComponent(Image)
         return searchImage(groupId,sender,img)
@@ -447,12 +507,22 @@ async def Process(message,groupId,sender,memberList):
                 At(target=sender),
                 Plain(text="图片预测功能关闭了呐~想要打开就联系机器人管理员吧~")
             ]
-        setPredictReady(groupId,sender,True)
+        
+        if getSetting(groupId,"tribute") and not getTributeInfo(sender,"VIP"):  #是否已完成上贡
+            return [
+                At(target=sender),
+                Plain(text="啊嘞嘞~你还不是VIP哦~不能使用图片预测功能呐~\n"),
+                Plain(text="快来完成每月指标吧~\n"),
+                Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+            ]
+
+        setReady(groupId,sender,True,"PredictReady")
         return [
             At(target=sender),
             Plain(text="请发送要预测的图片呐(推荐真实图片呐)~")
         ]
-    elif message.hasComponent(Image) and getSetting(groupId,"imgPredict") and getPredictReady(groupId,sender):
+    elif message.hasComponent(Image) and getSetting(groupId,"imgPredict") and getReady(groupId,sender,"predictReady"):
         print("predicting")
         img = message.getFirstComponent(Image)
         return predictImage(groupId,sender,img)
@@ -464,28 +534,146 @@ async def Process(message,groupId,sender,memberList):
                 At(target=sender),
                 Plain(text="图片涩度评价功能关闭了呐~想要打开就联系机器人管理员吧~")
             ]
-        setYellowPredictReady(groupId,sender,True)
+        
+        if getSetting(groupId,"tribute") and not getTributeInfo(sender,"VIP"):  #是否已完成上贡
+            return [
+                At(target=sender),
+                Plain(text="啊嘞嘞~你还不是VIP哦~不能使用涩度评价功能呐~\n"),
+                Plain(text="快来完成每月指标吧~\n"),
+                Plain(text="群内发送'开始上贡'即可开始发送图片哦~\n"),
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+            ]
+
+        setReady(groupId,sender,True,"yellowPredictReady")
         return [
             At(target=sender),
             Plain(text="请发送要预测的图片呐~")
         ]
-    elif message.hasComponent(Image) and getSetting(groupId,"yellowPredict") and getYellowPredictReady(groupId,sender):
+    elif message.hasComponent(Image) and getSetting(groupId,"yellowPredict") and getReady(groupId,sender,"yellowPredictReady"):
         print("judging")
         img = message.getFirstComponent(Image)
-        return judgeImageYellow(groupId,sender,img.url)
+        return judgeImageYellow(groupId,sender,img.url,yellowJudgeDist)
+    
+    # 上贡图片Judge
+    elif message.hasComponent(Image) and getSetting(groupId,"tribute") and getReady(groupId,sender,"tributeReady"):
+        setReady(groupId,sender,False,"tributeready")
+        print("judging")
+        img = message.getFirstComponent(Image)
+        result=judgeImageYellow(groupId,sender,img.url,tributeDist)
+        Normal=float(re.findall(r'Normal :(.*?)%',result[2].text)[0])
+        Hot=float(re.findall(r'Hot :(.*?)%',result[3].text)[0])
+        Sexy=float(re.findall(r'Sexy :(.*?)%',result[4].text)[0])
+        Total=float(re.findall(r'Total :(.*?)%',result[5].text)[0])
+        if Normal<=60 or Hot>50 or Sexy>50 or Total>20:
+            code=getData("searchCount")
+            hammRes=imgSimilarJudge(imgHash("%s%d.png"%(tributeDist,code)),"tribute")
+            if hammRes[0]:
+                removedFile="%s%d.png"%(tributeDist,code)
+                shutil.move(removedFile,tributeSimilarDist)
+                return [
+                    At(target=sender),
+                    Plain(text="\n有相似图片呐~\n"),
+                    Plain(text="汉明距离%d\n"%hammRes[1]),
+                    Plain(text="再找些别的图吧~")
+                ]
+            insertHash("%s%d.png"%(tributeDist,code),imgHash("%s%d.png"%(tributeDist,code)),"tribute")
+            record("tribute accepted","%s%d.png"%(tributeDist,code),sender,groupId,1,"img")
+            if int(getTributeInfo(sender,"tributeCount"))+1>=int(getSetting(groupId,"tributeQuantity")):
+                setTributeInfo(sender,getTributeInfo(sender,"tributeCount")+1,"tributeCount")
+                now=datetime.datetime.now()
+                end=now + relativedelta(months=+1)
+                now=now.strftime("%Y-%m-%d %H:%M:%S")
+                end=end.strftime("%Y-%m-%d %H:%M:%S")
+                setTributeInfo(sender,now,"startTime")
+                setTributeInfo(sender,end,"endTime")
+                setTributeInfo(sender,True,"VIP")
+                setReady(groupId,sender,False,"tributeready")
+                return [
+                    At(target=sender),
+                    Plain(text="恭喜~这张图通过了测试呐~\n"),
+                    Plain(text="本月目标%d张，现在已经传了%d张呐~"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount"))),
+                    Plain(text="你已获得VIP身份辣~\n"),
+                    Plain(text="VIP从现在开始到%s哦"%end)
+                ]
+            else:
+                setTributeInfo(sender,getTributeInfo(sender,"tributeCount")+1,"tributeCount")
+                return [
+                    At(target=sender),
+                    Plain(text="恭喜~这张图通过了测试呐~\n"),
+                    Plain(text="本月目标%d张，现在已经传了%d张呐~"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount"))),
+                    Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+                ]
+        else:
+            code=getData("searchCount")
+            removedFile="%s%d.png"%(tributeDist,code)
+            shutil.move(removedFile,tributeDelDist)
+            record("tribute not accepted","%s%d.png"%(tributeDelDist,code),sender,groupId,1,"img")
+            return [
+                At(target=sender),
+                Plain(text="很遗憾，这张图没有达标呢~\n"),
+                Plain("本图评价结果：\n"),
+                result[2],
+                result[3],
+                result[4],
+                result[5],
+                Plain(text="\n评判标准为：\n"),
+                Plain(text="Normal<=60 or Hot>50 or Sexy>50 or Total>20\n"),
+                Plain(text="再找些别的图吧~"),
+                Plain(text="群内发送'停止上贡'即可停止发送图片哦~\n")
+            ]
+        
     
     # 笑话功能
     elif "来点" in messageText and "笑话" in messageText:
+        jokeDict={"苏联":"soviet","法国":"french","法兰西":"french","美国":"america","美利坚":"america"}
         name=re.findall(r'来点(.*?)笑话',messageText,re.S)
-        if name==[]:
-            return "noneReply"
+        if name==['']:
+            return [
+                At(target=sender),
+                Plain(text="来点儿啥笑话啊，你又不告诉人家！哼！")
+            ]
+        elif name[0] in jokeDict.keys():
+            record("joke","none",sender,groupId,True,"function")
+            return getKeyJoke(jokeDict[name[0]])
         else:
             record("joke","none",sender,groupId,True,"function")
             return getJoke(name[0])
 
     # 群语录功能 celebrityQuotes
     elif messageText=="群语录":
-        return getCelebrityQuotes(groupId,memberList)
+        return getCelebrityQuotes(groupId,memberList,"none","random")
+    
+    # 群语录精准迫害功能
+    elif "来点" in messageText and "语录" in messageText:
+        name=re.findall(r'来点(.*?)语录',messageText,re.S)
+        if name==[]:
+            return "noneReply"
+        else:
+            record("quotes","none",sender,groupId,True,"function")
+            return getCelebrityQuotes(groupId,memberList,name,"select")
+    
+    # 开始上贡
+    elif messageText=="开始上贡":
+        if int(getTributeInfo(sender,"tributeCount"))>=int(getSetting(groupId,"tributeQuantity")):
+            # setReady(groupId,sender,False,"tributeready")
+            return [
+                At(target=sender),
+                Plain(text="你这个月已经发够%s张符合标准的图了呐~可以不用发啦~"%getSetting(groupId,"tributeQuantity"))
+            ]
+        else:
+            setReady(groupId,sender,True,"tributeready")
+            return [
+                At(target=sender),
+                Plain(text="现在可以发图啦~本月目标%d张，现在已经传了%d张呐~"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount")))
+            ]
+        
+    # 停止上贡
+    elif messageText=="停止上贡":
+        setReady(groupId,sender,False,"tributeready")
+        return [
+            At(target=sender),
+            Plain(text="上贡暂停啦~本月目标%d张，现在已经传了%d张呐~"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount")))
+        ]
 
     # 获取时间功能（可选背景）
     elif messageText in timeCallText:
@@ -628,9 +816,33 @@ async def Process(message,groupId,sender,memberList):
         
     # 添加群语录处理 @bot func.addQuote.content.target
     elif "[At::target=%i] func.addQuote."%BotQQ in messageText:
+        if message.hasComponent(Image):
+            try:
+                _,func,target,img=messageText.split(".")
+                quotesCount=getData("quotesCount")+1
+                print(quotesCount)
+                updateData(quotesCount,"quotes")
+                dist="%s%s.png"%(quotesDist,quotesCount)
+                print(dist)
+                img=message.getFirstComponent(Image)
+                img_content=requests.get(img.url).content
+                image=IMG.open(BytesIO(img_content))
+                image.save(dist)
+                return funcProcess(groupId,sender,func,pymysql.escape_string(dist),target,"img")
+            except Exception:
+                pass
+        else:
+            try:
+                _,func,content,target=messageText.split(".")
+                return funcProcess(groupId,sender,func,content,target,"text")
+            except Exception:
+                pass
+
+    # 添加别名处理 @bot func.addQuote.content.target
+    elif "[At::target=%i] func.addNickname."%BotQQ in messageText:
         try:
-            _,func,content,target=messageText.split(".")
-            return funcProcess(groupId,sender,func,content,target)
+            _,func,nickname,target=messageText.split(".")
+            return funcProcess(groupId,sender,func,nickname,target,"nickname")
         except Exception:
             pass
 
@@ -641,10 +853,10 @@ async def Process(message,groupId,sender,memberList):
         return addAdmin(groupId,target)
         
     # 删除管理员处理
-    # elif "[At::target=%i] deleteAdmin"%BotQQ in messageText:
-    #     target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
-    #     print("delete admin:%d in group %d"%(target,groupId))
-    #     return addAdmin(groupId,target)
+    elif "[At::target=%i] deleteAdmin"%BotQQ in messageText:
+        target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
+        print("delete admin:%d in group %d"%(target,groupId))
+        return deleteAdmin(groupId,target)
 
     # 获取疫情统计
     elif messageText=="疫情" or messageText=="疫情统计":
@@ -666,7 +878,7 @@ async def Process(message,groupId,sender,memberList):
         elif sender == HostQQ and not getSetting(groupId,"speakMode")=="chat":
             return [
                 At(target=sender),
-                Plain(text="诶嘿嘿，老公@我是要找人家玩嘛~纱雾这就来找你玩哟~")
+                Plain(text="诶嘿嘿，老公我来啦~")
             ]
         else:
             mode_now=getSetting(groupId,"speakMode")

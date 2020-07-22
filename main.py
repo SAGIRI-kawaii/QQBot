@@ -2,14 +2,12 @@
 from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage,XmlMessage,LightApp
 from mirai import MemberJoinEvent,MemberLeaveEventKick,MemberLeaveEventQuit,MemberSpecialTitleChangeEvent,MemberSpecialTitleChangeEvent,MemberPermissionChangeEvent,MemberMuteEvent,MemberUnmuteEvent,BotJoinGroupEvent,GroupRecallEvent
 from mirai import exceptions
-# from variable import *
+from variable import *
 from process import *
 import pymysql
 from itertools import chain
 import threading
 import asyncio
-from function import *
-getEpidemic()
 
 BotQQ =  getConfig("BotQQ")  # 字段 qq 的值 1785007019
 HostQQ = getConfig("HostQQ") #主人QQ
@@ -32,7 +30,7 @@ dragon={}                               #各群今日是否已宣布龙王
 
 n_time = datetime.datetime.now()    #目前时间
 start_time = 0    #程序启动时间
-d_time = datetime.datetime.strptime(str(datetime.datetime.now().date())+'23:00', '%Y-%m-%d%H:%M')   #龙王宣布时间
+d_time = datetime.datetime.strptime(str(datetime.datetime.now().date())+' 23:00', '%Y-%m-%d %H:%M')   #龙王宣布时间
 group_repeat={}             #每个群判断是否复读的dict
 
 reply_word=["啧啧啧","确实","giao","？？？","???","芜湖","是谁打断了复读？","是谁打断了复读?","老复读机了","就这","就这？","就这?"]     #复读关键词
@@ -99,9 +97,6 @@ async def subroutine1(app: Mirai):
 async def event_gm(app: Mirai, friend: Friend, message:MessageChain):
     print("friend Message")
     if friend.id==HostQQ:
-        # await app.sendFriendMessage(friend,[
-        #     LightApp(songOrder(message.toString()))
-        # ])
         if message.toString()[:5]=="发布消息：":
             msg=message.toString().replace("发布消息：","")
             groupList = await app.groupList()
@@ -144,7 +139,7 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
                 pass
             group_repeat[member.group.id]["stopMsg"]=group_repeat[member.group.id]["thisMsg"]
             record("repeat %s"%message.toString(),"none",sender,groupId,True,"function")
-    if message.hasComponent(Image) and getSearchReady(groupId,sender):
+    if message.hasComponent(Image) and getReady(groupId,sender,"searchReady"):
         try:
             await app.sendGroupMessage(group,[
                 At(target=sender),
@@ -152,6 +147,16 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
             ])
         except exceptions.BotMutedError:
             pass
+    elif message.hasComponent(Image) and getSetting(groupId,"listen"):      # 图片监听保存
+            botSetuCount=getData("botSetuCount")+1
+            dist="%s%s.png"%(setuBotDist,botSetuCount)
+            img = message.getFirstComponent(Image)
+            img=requests.get(img.url).content
+            image=IMG.open(BytesIO(img))
+            image.save(dist)
+            updateData(botSetuCount,"botSetuCount")
+            print("Image saved from group %s!"%group.name)
+            record("save img from group",dist,groupId,0,True,"img")
     Msg= await Process(message,groupId,sender,MemberList[groupId])
     if Msg=="noneReply":
         pass

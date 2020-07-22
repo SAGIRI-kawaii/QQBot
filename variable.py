@@ -4,7 +4,14 @@ import datetime
 import time
 from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage
 import json
-from function import getConfig
+
+def getConfig(config):
+    with open('config.json', 'r', encoding='utf-8') as f:  # 从json读配置
+        configs = json.loads(f.read())
+    if config in configs.keys():
+        return configs[config]
+    else:
+        print("getConfig Error:%s"%config)
 
 memberSetuNet={}         #每个群每个成员要的网络setu计数（限制每人五张）
 memberSetuFobidden={}       #每个群被禁止要setu的成员id
@@ -60,6 +67,10 @@ searchDist="M:\pixiv\\search\\"                                     #涩图机�
 clockPreviewDist="M:\pixiv\\time\preview\\"                         #表盘预览图存储路径
 predictDist="M:\pixiv\\predict\\"                                   
 yellowJudgeDist="M:\pixiv\\yellowJudge\\"
+quotesDist="M:\\pixiv\\quotes\\"
+tributeDist="M:\\pixiv\\tribute\\"
+tributeDelDist="M:\\pixiv\\tributeDel\\"
+tributeSimilarDist="M:\\pixiv\\tributeSimilar\\"
 
 reply_word=["啧啧啧","确实","giao","？？？","???","芜湖","是谁打断了复读？","是谁打断了复读?","老复读机了","就这","就这？","就这?"]     #复读关键词
 non_reply=["setu","bizhi","","别老摸了，给爷冲！","real","几点了","几点啦","几点啦?","几点了?","冲？","今天我冲不冲？"]      #不复读关键词
@@ -206,6 +217,15 @@ wikiLinux=[
 
 wikiQuotes=[
     Plain(text="\n群语录功能使用方式\n在群中直接发送'群语录'即可")
+]
+
+wikiMusic=[
+    Plain(text="\n点歌功能使用方式\n在群中直接发送'点歌 歌名'即可\n"),
+    Plain(text="如：点歌 病名为爱")
+]
+
+wikiEpidemic=[
+    Plain(text="\n疫情查询功能使用方式\n在群中直接发送'疫情/疫情统计'即可")
 ]
 
 setuSetting=[
