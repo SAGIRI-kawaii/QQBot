@@ -54,6 +54,8 @@ rainbowSrc=getConfig("rainbowSrc")             #彩虹屁api地址
 searchSrc="https://saucenao.com/"              #搜图网址
 weatherSrc=getConfig("weatherSrc")             #天气api地址
 virusSrc="https://api.yonyoucloud.com/apis/dst/ncov/country"
+wyySrc="https://api.tzg6.com/api/wyy"
+weiboHotSrc="http://api.weibo.cn/2/guest/search/hot/word"
 
 setuDist="M:\\Pixiv\\pxer_new\\"                                    #setu存储路径
 setu18Dist="M:\\Pixiv\\pxer18_new\\"                                #setuR18存储路径
@@ -74,7 +76,7 @@ tributeSimilarDist="M:\\pixiv\\tributeSimilar\\"
 
 reply_word=["啧啧啧","确实","giao","？？？","???","芜湖","是谁打断了复读？","是谁打断了复读?","老复读机了","就这","就这？","就这?"]     #复读关键词
 non_reply=["setu","bizhi","","别老摸了，给爷冲！","real","几点了","几点啦","几点啦?","几点了?","冲？","今天我冲不冲？"]      #不复读关键词
-setuCallText=["[Image::A3C91AFE-8834-1A67-DA08-899742AEA4E5]","[Image::A0FE77EE-1F89-BE0E-8E2D-62BCD1CAB312]","[Image::04923170-2ACB-5E94-ECCD-953F46E6CAB9]","[Image::3FFFE3B5-2E5F-7307-31A4-2C7FFD2F395F]","[Image::8A3450C7-0A98-4E81-FA24-4A0342198221]","setu","车车","开车","来点色图","来点儿车车"]
+setuCallText=["[Image::A3C91AFE-8834-1A67-DA08-899742AEA4E5]","[Image::A0FE77EE-1F89-BE0E-8E2D-62BCD1CAB312]","[Image::04923170-2ACB-5E94-ECCD-953F46E6CAB9]","[Image::3FFFE3B5-2E5F-7307-31A4-2C7FFD2F395F]","[Image::8A3450C7-0A98-4E81-FA24-4A0342198221]","setu","车车","开车","来点色图","来点儿车车","色图来","[Image::B407F708-A2C6-A506-3420-98DF7CAC4A57]"]
 searchCallText=["search","搜图"]
 timeCallText=["几点啦","几点了","几点啦？","几点了？","time"]
 
@@ -377,3 +379,34 @@ allInfo=[
     Plain(text="\nallInfo：\n"),
     Plain(text="@bot info.all\n")
 ]
+
+chaodu="""
+尔时，救苦天尊，
+遍满十方界，常以威神力，救拔诸众生，得离于迷途，
+众生不知觉，如盲见日月，我本太无中，拔领无边际，
+庆云开生门，祥烟塞死户，初发玄元始，以通祥感机，
+救一切罪，度一切厄，
+渺渺超仙源，荡荡自然清，皆承大道力，以伏诸魔精，
+空中何灼灼，名曰泥丸仙，紫云覆黄老，是名三宝君，
+还将上天炁，以制九天魂，救苦诸妙神，善见救苦时，
+天上混无分，天炁归一身，皆成自然人，自然有别体。
+本在空洞中，空洞迹非迹，遍体皆虚空。
+第一委炁立，第二顺炁生，第三成万法，第四生光明，
+天上三十六，地下三十六，太玄无边际，妙哉大洞经。
+皈命太上尊，能消一切罪。
+东方玉宝皇上天尊，南方玄真万福天尊，
+西方太妙至极天尊，北方玄上玉辰天尊，
+东北方度仙上圣天尊，东南方好生度命天尊，
+西南方太灵虚皇天尊，西北方无量太华天尊，
+上方玉虚明皇天尊，下方真皇洞神天尊。
+道言：
+十方诸天尊，其数如沙尘，化形十方界，普济度天人，
+委炁聚功德，同声救罪人，罪人实可哀，我今说妙经，
+念诵无休息，归身不暂停，天堂享大福，地狱无苦声，
+火翳成清署，剑树化为骞，上登朱陵府，下入开光门，
+超度三界难，迳上元始天，于是飞天神王，无鞅数众，
+瞻仰尊颜而作颂曰：
+天尊说经教，接引于浮生，勤修学无为，悟真道自成，
+不迷亦不荒，无我亦无名，朗诵罪福句，万遍心垢清。
+尔时，飞天神王，及诸天仙众，说是诵毕，稽首天尊，奉辞而退。
+"""

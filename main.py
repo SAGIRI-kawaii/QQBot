@@ -1,15 +1,17 @@
 #coding=utf-8
-from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage,XmlMessage,LightApp
-from mirai import MemberJoinEvent,MemberLeaveEventKick,MemberLeaveEventQuit,MemberSpecialTitleChangeEvent,MemberSpecialTitleChangeEvent,MemberPermissionChangeEvent,MemberMuteEvent,MemberUnmuteEvent,BotJoinGroupEvent,GroupRecallEvent
+from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage,XmlMessage,LightApp,Quote
+from mirai import MemberJoinEvent,MemberLeaveEventKick,MemberLeaveEventQuit,MemberSpecialTitleChangeEvent,MemberSpecialTitleChangeEvent,MemberPermissionChangeEvent,MemberMuteEvent,MemberUnmuteEvent,BotJoinGroupEvent,GroupRecallEvent,MemberLeaveEventKick
 from mirai import exceptions
+import BilibiliLiveDanmaku
 from variable import *
 from process import *
 import pymysql
 from itertools import chain
 import threading
 import asyncio
+from taskTimerClass import *
 
-BotQQ =  getConfig("BotQQ")  # 字段 qq 的值 1785007019
+BotQQ =  getConfig("BotQQ")  # 字段 qq 的值
 HostQQ = getConfig("HostQQ") #主人QQ
 authKey = getConfig("authKey") # 字段 authKey 的值
 mirai_api_http_locate = getConfig("mirai_api_http_locate") # httpapi所在主机的地址端口,如果 setting.yml 文件里字段 "enableWebsocket" 的值为 "true" 则需要将 "/" 换成 "/ws", 否则将接收不到消息.
@@ -21,6 +23,7 @@ group_repeat={}             #每个群判断是否复读的dict
 group_repeat_switch={}      #每个群的复读开关
 timeDisable={}              #关闭setu开关的时间
 MemberList={}               #成员列表
+listenId={}                 #监听成员列表
 
 localtime = time.localtime(time.time())
 day_set=localtime.tm_mday
@@ -33,33 +36,24 @@ start_time = 0    #程序启动时间
 d_time = datetime.datetime.strptime(str(datetime.datetime.now().date())+' 23:00', '%Y-%m-%d %H:%M')   #龙王宣布时间
 group_repeat={}             #每个群判断是否复读的dict
 
-reply_word=["啧啧啧","确实","giao","？？？","???","芜湖","是谁打断了复读？","是谁打断了复读?","老复读机了","就这","就这？","就这?"]     #复读关键词
-non_reply=["setu","bizhi","","别老摸了，给爷冲！","real","几点了","几点啦","几点啦?","几点了?","冲？","今天我冲不冲？"]      #不复读关键词
+non_reply=["setu","bizhi","","别老摸了，给爷冲！","real","几点了","几点啦","几点啦?","几点了?","冲？","今天我冲不冲？","车车","wyy"]      #不复读关键词
 setuCallText=["[Image::A3C91AFE-8834-1A67-DA08-899742AEA4E5]","[Image::A0FE77EE-1F89-BE0E-8E2D-62BCD1CAB312]","[Image::04923170-2ACB-5E94-ECCD-953F46E6CAB9]","[Image::3FFFE3B5-2E5F-7307-31A4-2C7FFD2F395F]","[Image::8A3450C7-0A98-4E81-FA24-4A0342198221]","setu","车车","开车","来点色图","来点儿车车"]
 searchCallText=["search","搜图"]
 timeCallText=["几点啦","几点了","几点啦？","几点了？"]
 setuBot=[]
 setuGroup=[]
 repeatBot=[]
+groupIdList=[]
 
 @app.subroutine
 async def subroutine1(app: Mirai):
     print("subroutine1 started")
-    global bizhiCalled
-    global setuCalled
-    global realCalled
-    global weatherCalled
-    global responseCalled
-    global count
-    global start_time
-    global timeDisable
-    global searchCount
-    global city
     start_time=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     groupList = await app.groupList()
     print(groupList)
     checkGroupInit(groupList)
     for i in groupList:
+        groupIdList.append(i.id)
         memberPicCount[i.id]={}
         member_dict={}
         member_fobidden={}
@@ -68,30 +62,114 @@ async def subroutine1(app: Mirai):
         for j in memberList:
             member_dict[j.id]=0
             member_fobidden[j.id]=False
-        memberSetuNet[i.id]=member_dict
-        memberSetuFobidden[i.id]=member_fobidden
-        dragon[i.id]=False
         group_repeat[i.id]={"lastMsg":"","thisMsg":"","stopMsg":""}
+    listenId=getListenId(groupIdList)
     # for i in groupList:
     #     await app.sendGroupMessage(i,[
     #         Plain(text="爷来啦~")
     #     ])
-        #读取信息并存储
 
-    # with open(dragonDist,"r") as f:
-    #     today=datetime.datetime.now().strftime("%Y-%m-%d")
-    #     text = f.readline().strip()
-    #     print(text,today)
-    #     if not text==str(today):
-    #         return
-    #     while 1:
-    #         text = f.readline().strip()
-    #         if not text:
-    #             break
-    #         groupid,memberid,count=text.split(":")
-    #         groupid=int(groupid)
-    #         memberid=int(memberid)
-    #         memberPicCount[groupid][memberid]=int(count)
+'''
+@app.subroutine
+async def listenSubscribe(app: Mirai):
+    print("listenSubscribe start")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "select roomid from subscribelisten where platform='bilibili'"
+    cur.execute(sql) 
+    data = cur.fetchall()
+    roomId=list(chain.from_iterable(data))
+    sql = "select * from subscribe where platform='bilibili'"
+    cur.execute(sql) 
+    data = cur.fetchall()
+    sql = "select count(*) from subscribe where platform='bilibili'"
+    cur.execute(sql) 
+    count = cur.fetchone()[0]
+    conn.close()
+    cur.close()
+    subscribeList={}
+    for i in data:
+        subscribeList[i[2]]=[]
+    for i in data:
+        subscribeList[i[2]].append({"groupId":i[0],"memberId":i[1]})
+    status={}
+    for i in roomId:
+        status[i]=True
+    while(1):
+        conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+        cur = conn.cursor()
+        sql = "select count(*) from subscribe where platform='bilibili'"
+        cur.execute(sql) 
+        newCount = cur.fetchone()[0]
+        if count==newCount:
+            conn.close()
+            cur.close()
+        else:
+            print("new record!") 
+            sql = "select roomid from subscribelisten where platform='bilibili'"
+            cur.execute(sql) 
+            data = cur.fetchall()
+            roomId=list(chain.from_iterable(data))
+            sql = "select * from subscribe where platform='bilibili'"
+            cur.execute(sql) 
+            data = cur.fetchall()
+            sql = "select count(*) from subscribe where platform='bilibili'"
+            cur.execute(sql) 
+            count = cur.fetchone()[0]
+            conn.close()
+            cur.close()
+            subscribeList={}
+            for i in data:
+                subscribeList[i[2]]=[]
+                subscribeList[i[2]].append({"groupId":i[0],"memberId":i[1]})
+            status={}
+            for i in roomId:
+                status[i]=True
+        print("start listening room")
+        # print(subscribeList)
+        for i in roomId:
+            last=status[i]
+            roomInfo=getBilibiliRoomInfo(i)
+            status[i]=roomInfo[1]
+            if last==False and status[i]==True:
+                print("get %s online"%i)
+                print(subscribeList[i])
+                for memberDict in subscribeList[i]:
+                    msgList=[]
+                    # msgList.append(At(target=memberDict["memberId"]))
+                    # msgList.append(Plain("\n"))
+                    msgList.append(Plain(text="你关注的主播 %s 开播啦~\n"%roomInfo[3]))
+                    msgList.append(Plain(text="快来看看吧~\n"))
+                    msgList.append(Plain(text="地址:%s"%roomInfo[6]))
+                    # await app.sendGroupMessage(memberDict["groupId"],msgList)
+                    try:
+                        await app.sendTempMessage(memberDict["groupId"],memberDict["memberId"],msgList)
+                    except Exception:
+                        pass
+        print("end listening room")
+        await asyncio.sleep(10)
+'''
+
+async def dragon(groupIdList):
+    print("dragon")
+    print(groupIdList)
+    for i in groupIdList:
+        if getSetting(i,"setu") or getSetting(i,"real"):
+            msg=FindDragonKing(i,MemberList[i])
+            updateDragon(i,0,"all")
+            await app.sendGroupMessage(i,msg)
+        else:
+            pass
+
+def func(groupList):
+    print("func")
+    loop =  asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(dragon(groupList))
+
+timer = TaskTimer()
+timer.join_task(func, [groupIdList], timing=22.5) # 每天15:30执行
+timer.start()
 
 @app.receiver("FriendMessage")
 async def event_gm(app: Mirai, friend: Friend, message:MessageChain):
@@ -103,15 +181,17 @@ async def event_gm(app: Mirai, friend: Friend, message:MessageChain):
             for i in groupList:
                 await app.sendGroupMessage(i,msg)
         elif message.hasComponent(Image):
-            botSetuCount=getData("botSetuCount")+1
-            dist="%s%s.png"%(setuBotDist,botSetuCount)
-            img = message.getFirstComponent(Image)
-            img=requests.get(img.url).content
-            image=IMG.open(BytesIO(img))
-            image.save(dist)
-            updateData(botSetuCount,"botSetuCount")
+            img = message.getAllofComponent(Image)
+            for i in img:
+                botSetuCount=getData("botSetuCount")+1
+                updateData(botSetuCount,"botSetuCount")
+                dist="%s%s.png"%(setuBotDist,botSetuCount)
+                imgContent=requests.get(i.url).content
+                image=IMG.open(BytesIO(imgContent))
+                image.save(dist)
+                insertHash("%s%d.png"%(setuBotDist,botSetuCount),imgHash("%s%d.png"%(setuBotDist,botSetuCount)),"tribute")
             await app.sendFriendMessage(friend,[
-                Plain(text="Image saved!")
+                Plain(text="%d Image saved!"%len(img))
             ])
             record("save img from Host",dist,HostQQ,0,True,"img")
 
@@ -138,7 +218,17 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
             except exceptions.BotMutedError:
                 pass
             group_repeat[member.group.id]["stopMsg"]=group_repeat[member.group.id]["thisMsg"]
-            record("repeat %s"%message.toString(),"none",sender,groupId,True,"function")
+            try:
+                record("repeat %s"%message.toString(),"none",sender,groupId,True,"function")
+            except pymysql.err.InternalError:
+                pass
+
+
+    if message.toString()=="test" and sender==HostQQ:
+        getListenId(groupIdList)
+        # msg=FindDragonKing(groupId,MemberList[groupId])
+        # await app.sendGroupMessage(group,msg)
+
     if message.hasComponent(Image) and getReady(groupId,sender,"searchReady"):
         try:
             await app.sendGroupMessage(group,[
@@ -147,68 +237,86 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
             ])
         except exceptions.BotMutedError:
             pass
-    elif message.hasComponent(Image) and getSetting(groupId,"listen"):      # 图片监听保存
-            botSetuCount=getData("botSetuCount")+1
-            dist="%s%s.png"%(setuBotDist,botSetuCount)
-            img = message.getFirstComponent(Image)
-            img=requests.get(img.url).content
-            image=IMG.open(BytesIO(img))
-            image.save(dist)
-            updateData(botSetuCount,"botSetuCount")
-            print("Image saved from group %s!"%group.name)
-            record("save img from group",dist,groupId,0,True,"img")
-    Msg= await Process(message,groupId,sender,MemberList[groupId])
-    if Msg=="noneReply":
-        pass
-    elif Msg=="goodNight":
-        try:
-            await app.sendGroupMessage(group,[
-                    At(target=sender),
-                    Plain(text="晚安，睡个好觉呐~")
-                ]) 
-        except exceptions.BotMutedError:
+    elif message.hasComponent(Image) and getSetting(groupId,"listen") and sender in listenId[groupId]:      # 图片监听保存
+        botSetuCount=getData("botSetuCount")+1
+        dist="%s%s.png"%(setuBotDist,botSetuCount)
+        img = message.getFirstComponent(Image)
+        img=requests.get(img.url).content
+        image=IMG.open(BytesIO(img))
+        image.save(dist)
+        updateData(botSetuCount,"botSetuCount")
+        print("Image saved from group %s!"%group.name)
+        record("save img from group",dist,groupId,0,True,"img")
+    try:
+        Msg= await Process(message,groupId,sender,MemberList[groupId])
+        if Msg=="noneReply":
             pass
-        await app.mute(group,member,28800)
-    elif Msg=="muteAll":
-        try:
-            await app.sendGroupMessage(group,[
-                    Plain(text="万马齐喑！")
-                ]) 
-        except exceptions.BotMutedError:
-            pass
-        await app.muteAll(group)
-    elif Msg=="unmuteAll":
-        try:
-            await app.sendGroupMessage(group,[
-                    Plain(text="春回大地！")
-                ]) 
-        except exceptions.BotMutedError:
-            pass
-        await app.unmuteAll(group)
-    elif Msg=="lightningPic":
-        try:
-            await app.mute(group,member,60)
+        elif Msg=="goodNight":
             try:
                 await app.sendGroupMessage(group,[
-                        Plain(text="啊这。。。啊 正 道 的 光~劈 在 了 涩 批 上~他将在医院里呆上整整一分钟!(p=0.30)")
+                        At(target=sender),
+                        Plain(text="晚安，睡个好觉呐~")
                     ]) 
             except exceptions.BotMutedError:
                 pass
-        except PermissionError:
+            await app.mute(group,member,28800)
+        elif Msg=="muteAll":
             try:
                 await app.sendGroupMessage(group,[
-                        Plain(text="啊这。。。啊 正 道 的 光~劈 在 了 涩 批 上~但可惜我权限不足呐~没有进医院真是幸运呐~")
+                        Plain(text="万马齐喑！")
                     ]) 
             except exceptions.BotMutedError:
                 pass
-    else:
-        try:
-            msg = await app.sendGroupMessage(group,Msg)
-            if getSetting(groupId,"r18") and "setu" in message.toString():
-                await asyncio.sleep(10)
-                await app.revokeMessage(msg)
-        except exceptions.BotMutedError:
-            pass
+            await app.muteAll(group)
+        elif Msg=="unmuteAll":
+            try:
+                await app.sendGroupMessage(group,[
+                        Plain(text="春回大地！")
+                    ]) 
+            except exceptions.BotMutedError:
+                pass
+            await app.unmuteAll(group)
+        elif Msg=="lightningPic":
+            try:
+                await app.mute(group,member,60)
+                try:
+                    await app.sendGroupMessage(group,[
+                            Plain(text="啊这。。。啊 正 道 的 光~劈 在 了 涩 批 上~他将在医院里呆上整整一分钟!(p=0.30)")
+                        ]) 
+                except exceptions.BotMutedError:
+                    pass
+            except PermissionError:
+                try:
+                    await app.sendGroupMessage(group,[
+                            Plain(text="啊这。。。啊 正 道 的 光~劈 在 了 涩 批 上~但可惜我权限不足呐~没有进医院真是幸运呐~")
+                        ]) 
+                except exceptions.BotMutedError:
+                    pass
+        elif Msg[0]=="上贡":
+            source=message.getSource()
+            Msg=Msg[1:]
+            try:
+                msg = await app.sendGroupMessage(group,Msg,quoteSource=source)
+            except exceptions.BotMutedError:
+                NVML_PAGE_RETIREMENT_CAUSE_MULTIPLE_SINGLE_BIT_ECC_ERRORS
+        elif Msg[0]=="pic*":
+            Msg=Msg[1:]
+            try:
+                for i in Msg:
+                    await app.sendGroupMessage(group,[i])
+            except exceptions.BotMutedError:
+                pass
+        else:
+            try:
+                msg = await app.sendGroupMessage(group,Msg)
+                if getSetting(groupId,"r18") and "setu" in message.toString() and type(Msg[0])=="Image":
+                    await asyncio.sleep(10)
+                    await app.revokeMessage(msg)
+            except exceptions.BotMutedError:
+                pass
+    except Exception as e:
+        await app.sendGroupMessage(group,[Plain(text="Error:\n%s"%e)])
+    
 
 # 加入群
 @app.receiver("MemberJoinEvent")
@@ -238,6 +346,18 @@ async def member_join(app: Mirai, event: MemberLeaveEventKick):
 # 退群了
 @app.receiver("MemberLeaveEventQuit")
 async def member_join(app: Mirai, event: MemberLeaveEventQuit):
+    try:
+        await app.sendGroupMessage(
+            event.member.group.id,[
+                Plain(text="%s怎么走了呐~是纱雾不够可爱吗嘤嘤嘤"%qq2name(MemberList[event.member.group.id],event.member.id))
+            ]
+        )
+    except exceptions.BotMutedError:
+        pass
+
+# 被踢了
+@app.receiver("MemberLeaveEventKick")
+async def member_join(app: Mirai, event: MemberLeaveEventKick):
     try:
         await app.sendGroupMessage(
             event.member.group.id,[
@@ -309,7 +429,7 @@ async def member_join(app: Mirai, event: BotJoinGroupEvent):
     except exceptions.BotMutedError:
         pass
     await addGroupinit(event.group.id,event.group.name)
-1
+
 # 防撤回
 # @app.receiver("GroupRecallEvent")
 # async def member_join(app: Mirai, event: GroupRecallEvent):

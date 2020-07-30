@@ -17,7 +17,7 @@ settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"n
 sleepMuteCallText=["精致睡眠","晚安","晚安，精致睡眠"]
 muteAllCallText=["万籁俱寂"]
 unmuteAllCallText=["春回大地","万物复苏"]
-blackList=[2518357362]
+blackList=getBlacklist()
 
 # setting语句处理
 def settingProcess(groupId,sender,config,change):
@@ -143,7 +143,7 @@ def wikiProcess(groupId,sender,messageText):
             Plain(text="使用方法：@bot wiki:name(不用括号里的)\n"),
             Plain(text="如：@bot wiki:linux\n")
         ]
-    elif messaxt.replace("[At::target=%i] wiki:"%BotQQ,"")=="management":
+    elif messageText.replace("[At::target=%i] wiki:"%BotQQ,"")=="management":
         return [
             At(target=sender),
             Plain(text="management 下属目录：\n"),
@@ -280,6 +280,7 @@ async def Process(message,groupId,sender,memberList):
 
     # setu功能
     if messageText in setuCallText:
+        updateDragon(groupId,sender,"normal")
         setuCalled=getData("setuCalled")
         setuCalled+=1                               #setuCalled计数  
         updateData(setuCalled,"setu")
@@ -344,6 +345,7 @@ async def Process(message,groupId,sender,memberList):
 
     # real功能
     elif messageText=="real":
+        updateDragon(groupId,sender,"normal")
         realCalled=getData("realCalled")
         realCalled+=1                                   #realCalled计数  
         updateData(realCalled,"real")
@@ -452,7 +454,7 @@ async def Process(message,groupId,sender,memberList):
                             realCalled=getData("realCalled")
                             realCalled+=num
                             updateData(realCalled,"real")
-                        picMsg=[]
+                        picMsg=["pic*"]
                         for i in range(num):
                             # if setting[groupId]["setuLocal"]:
                             dist=randomPic(aimDist)
@@ -564,18 +566,44 @@ async def Process(message,groupId,sender,memberList):
         Hot=float(re.findall(r'Hot :(.*?)%',result[3].text)[0])
         Sexy=float(re.findall(r'Sexy :(.*?)%',result[4].text)[0])
         Total=float(re.findall(r'Total :(.*?)%',result[5].text)[0])
-        if Normal<=60 or Hot>50 or Sexy>50 or Total>20:
+        if Normal<=55 or Hot>50 or Sexy>50 or Total>20:
             code=getData("searchCount")
-            hammRes=imgSimilarJudge(imgHash("%s%d.png"%(tributeDist,code)),"tribute")
+            hammRes=imgSimilarJudge(imgHash("%s%d.png"%(tributeDist,code)),"tribute",10)
             if hammRes[0]:
                 removedFile="%s%d.png"%(tributeDist,code)
                 shutil.move(removedFile,tributeSimilarDist)
                 return [
+                    "上贡",
                     At(target=sender),
-                    Plain(text="\n有相似图片呐~\n"),
+                    Plain(text="\n有相似图片在tribute图库中呐~\n"),
                     Plain(text="汉明距离%d\n"%hammRes[1]),
                     Plain(text="再找些别的图吧~")
                 ]
+            else:
+                hammRes=imgSimilarJudge(imgHash("%s%d.png"%(tributeDist,code)),"setu",3)
+                if hammRes[0]:
+                    removedFile="%s%d.png"%(tributeDist,code)
+                    shutil.move(removedFile,tributeSimilarDist)
+                    return [
+                        "上贡",
+                        At(target=sender),
+                        Plain(text="\n有相似图片在setu图库中呐~\n"),
+                        Plain(text="汉明距离%d\n"%hammRes[1]),
+                        Plain(text="再找些别的图吧~")
+                    ]
+                else:
+                    hammRes=imgSimilarJudge(imgHash("%s%d.png"%(tributeDist,code)),"setu18",3)
+                    if hammRes[0]:
+                        removedFile="%s%d.png"%(tributeDist,code)
+                        shutil.move(removedFile,tributeSimilarDist)
+                        return [
+                            "上贡",
+                            At(target=sender),
+                            Plain(text="\n有相似图片在setu18图库中呐~\n"),
+                            Plain(text="汉明距离%d\n"%hammRes[1]),
+                            Plain(text="再找些别的图吧~")
+                        ]
+
             insertHash("%s%d.png"%(tributeDist,code),imgHash("%s%d.png"%(tributeDist,code)),"tribute")
             record("tribute accepted","%s%d.png"%(tributeDist,code),sender,groupId,1,"img")
             if int(getTributeInfo(sender,"tributeCount"))+1>=int(getSetting(groupId,"tributeQuantity")):
@@ -589,6 +617,7 @@ async def Process(message,groupId,sender,memberList):
                 setTributeInfo(sender,True,"VIP")
                 setReady(groupId,sender,False,"tributeready")
                 return [
+                    "上贡",
                     At(target=sender),
                     Plain(text="恭喜~这张图通过了测试呐~\n"),
                     Plain(text="本月目标%d张，现在已经传了%d张呐~\n"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount"))),
@@ -598,6 +627,7 @@ async def Process(message,groupId,sender,memberList):
             else:
                 setTributeInfo(sender,getTributeInfo(sender,"tributeCount")+1,"tributeCount")
                 return [
+                    "上贡",
                     At(target=sender),
                     Plain(text="恭喜~这张图通过了测试呐~\n"),
                     Plain(text="本月目标%d张，现在已经传了%d张呐~\n"%(getSetting(groupId,"tributeQuantity"),getTributeInfo(sender,"tributeCount"))),
@@ -605,10 +635,12 @@ async def Process(message,groupId,sender,memberList):
                 ]
         else:
             code=getData("searchCount")
+            insertHash("%s%d.png"%(tributeDist,code),imgHash("%s%d.png"%(tributeDist,code)),"tribute")
             removedFile="%s%d.png"%(tributeDist,code)
             shutil.move(removedFile,tributeDelDist)
             record("tribute not accepted","%s%d.png"%(tributeDelDist,code),sender,groupId,1,"img")
             return [
+                "上贡",
                 At(target=sender),
                 Plain(text="很遗憾，这张图没有达标呢~\n"),
                 Plain("本图评价结果：\n"),
@@ -617,7 +649,7 @@ async def Process(message,groupId,sender,memberList):
                 result[4],
                 result[5],
                 Plain(text="\n评判标准为：\n"),
-                Plain(text="Normal<=60 or Hot>50 or Sexy>50 or Total>20\n"),
+                Plain(text="Normal<=55 or Hot>50 or Sexy>50 or Total>20\n"),
                 Plain(text="再找些别的图吧~\n"),
                 Plain(text="群内发送'停止上贡'即可停止发送图片哦~")
             ]
@@ -652,6 +684,14 @@ async def Process(message,groupId,sender,memberList):
             record("quotes","none",sender,groupId,True,"function")
             return getCelebrityQuotes(groupId,memberList,name,"select")
     
+    # 网抑云
+    elif messageText=="网抑云" or messageText=="wyy":
+        return getWyy()
+
+    # 群友平安
+    elif messageText=="平安":
+        return safe(groupId,memberList)
+
     # 开始上贡
     elif messageText=="开始上贡":
         if int(getTributeInfo(sender,"tributeCount"))>=int(getSetting(groupId,"tributeQuantity")):
@@ -765,7 +805,7 @@ async def Process(message,groupId,sender,memberList):
     # 翻译功能
     elif "[At::target=%i] "%BotQQ in messageText and "用" in messageText and "怎么说" in messageText:
         supportLanguage={"中文":"zh","英文":"en","日文":"jp","韩文":"kr","法文":"fr","西班牙文":"es","意大利文":"it","德文":"de","土耳其文":"tr","俄文":"ru","葡萄牙文":"pt","越南文":"vi","印度尼西亚文":"id","马来西亚文":"ms","泰文":"th"}
-        tp=re.findall(r'\[At::target=762802224\] (.*?)用(.*?)怎么说',messageText,re.S)[0]
+        tp=re.findall(r'\] (.*?)用(.*?)怎么说',messageText,re.S)[0]
         text=tp[0]
         target=tp[1]
         print("text:%s,target:%s"%(text,target))
@@ -858,6 +898,26 @@ async def Process(message,groupId,sender,memberList):
         print("delete admin:%d in group %d"%(target,groupId))
         return deleteAdmin(groupId,target)
 
+    # 加入黑名单处理
+    elif "[At::target=%i] addBlacklist"%BotQQ in messageText:
+        target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
+        if target in blackList:
+            return [Plain(text="%s is already in the blacklist")%qq2name(memberList,target)]
+        else:
+            blackList.append(target)
+            print("%s is added to the blacklist"%qq2name(memberList,target))
+            return addToBlacklist(target)
+
+    # 移出黑名单处理
+    elif "[At::target=%i] removeBlacklist"%BotQQ in messageText:
+        target=int(re.findall(r'At::target=(.*?)]',messageText[19:],re.S)[0])
+        if target not in blackList:
+            return [Plain(text="%s is not in the blacklist originally")%qq2name(memberList,target)]
+        else:
+            blackList.remove(target)
+            print("%s is removed from the blacklist"%qq2name(memberList,target))
+            return removeFromBlacklist(target)
+
     # 获取疫情统计
     elif messageText=="疫情" or messageText=="疫情统计":
         return [LightApp(getEpidemic())]
@@ -866,6 +926,48 @@ async def Process(message,groupId,sender,memberList):
     elif messageText[:3]=="点歌 ":
         target=messageText[3:]
         return [LightApp(songOrder(target))]
+
+    # 微博热搜
+    elif messageText=="weibo" or messageText=="微博" or messageText=="微博热搜":
+        return getWeiboHot()
+    
+    # 添加管理员处理
+    elif "超度" in messageText and sender==HostQQ:
+        target=int(re.findall(r'\[At::target=(.*?)\]',messageText,re.S)[0])
+        return [
+            At(target=target),
+            Plain(text=chaodu)
+        ]
+
+    # 添加订阅检查
+    elif messageText[:7]=="添加B站订阅 ":
+        target=messageText.replace("添加B站订阅 ","")
+        status=getBilibiliRoomInfo(target)
+        if status[0]:
+            return [
+                At(target=sender),
+                Plain(text="\n你确定要添加直播间%s?\n"%target),
+                Plain(text="--------------------------------\n"),
+                Plain(text="该直播间信息如下：\n"),
+                Plain(text="房间名：%s\n"%status[2]),
+                Plain(text="主播名：%s\n"%status[3]),
+                Plain(text="主播种类：%s\n"%status[4]),
+                Plain(text="主播区域：%s\n"%status[5]),
+                Plain(text="房间链接：%s\n"%status[6]),
+                Plain(text="--------------------------------\n"),
+                Plain(text="确认是此主播嘛~\n如果确认的话发送\n'确定添加B站订阅 %s'\n就可以添加订阅啦~"%target)
+            ]
+        else:
+            return [
+                At(target=sender),
+                Plain(text="\n直播间号错误！请检查后重新发送！")
+            ]
+    
+    # 添加订阅
+    elif messageText[:9]=="确定添加B站订阅 ":
+        target=messageText.replace("确定添加B站订阅 ","")
+        status=getBilibiliRoomInfo(target)
+        return addSubscribe(groupId,sender,target,"bilibili")
 
     # 回复@bot（normal,zuanLow,zuanHigh,rainbow）
     elif "[At::target=%i]"%BotQQ in messageText:

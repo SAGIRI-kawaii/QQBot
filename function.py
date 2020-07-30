@@ -544,7 +544,7 @@ def recordClock(groupId,sender,choice):
 
 # 判断setting选项合法性
 def configChangeJudge(config,change):
-    if config=="limit" and change.isnumeric():
+    if (config=="limit" or config=="tributeQuantity") and change.isnumeric():
         return True
     if change not in settingCode:
         return False
@@ -1047,6 +1047,37 @@ def deleteAdmin(groupId,adminId):
     conn.close()
     return [Plain(text="id:%d deleted from group:%d's admin list!"%(adminId,groupId))]
 
+# 获取黑名单
+def getBlacklist():
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "select * from blacklist"
+    cur.execute(sql) 
+    data = cur.fetchall()
+    blacklist=list(chain.from_iterable(data))
+    return blacklist
+
+# 加入黑名单
+def addToBlacklist(memberId):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "INSERT INTO blacklist (id) values (%d)"%memberId
+    cur.execute(sql) 
+    conn.commit()
+    cur.close()
+    conn.close()
+    return [Plain(text="id:%d add into blacklist"%memberId)]
+
+# 移除黑名单
+def removeFromBlacklist(memberId):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "delete from blacklist where id=%d"%memberId
+    cur.execute(sql) 
+    cur.close()
+    conn.close()
+    return [Plain(text="id:%d removed from blacklist!"%memberId)]
+
 # 返回笑话
 def getJoke(name):
     conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
@@ -1413,7 +1444,7 @@ def imgHamm(res1, res2):
     return num
 
 # 图片相似度判断
-def imgSimilarJudge(tImgHash,path):
+def imgSimilarJudge(tImgHash,path,value):
     conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
     sql="select imageHash from imageHash where class='%s'"%path
@@ -1421,7 +1452,7 @@ def imgSimilarJudge(tImgHash,path):
     data = cur.fetchall()
     Hash=list(chain.from_iterable(data))
     for i in Hash:
-        if imgHamm(i,tImgHash)<=12:
+        if imgHamm(i,tImgHash)<=value:
             return (True,imgHamm(i,tImgHash))
     return (False,"none")
 
@@ -1438,4 +1469,206 @@ def insertHash(path,imageHash,pathClass):
     conn.close()
     cur.close()
 
-# 判断VIP资格是否到期
+# 查询b站直播间
+def getBilibiliRoomInfo(roomId):
+    bilibiliSrc="https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom"
+    roomLink="https://live.bilibili.com/%s"%roomId
+    res = requests.get(bilibiliSrc, params={'room_id': roomId})
+    data=res.json()
+    if "data" in data.keys():
+        live_status=data["data"]["room_info"]["live_status"]
+        title=data["data"]["room_info"]["title"]
+        anchor_info=data["data"]["anchor_info"]["base_info"]["uname"]
+        area_name=data["data"]["room_info"]["area_name"]
+        parent_area_name=data["data"]["room_info"]["parent_area_name"]
+        # print(data)
+        time.sleep(0.2)
+        return (True,live_status,title,anchor_info,area_name,parent_area_name,roomLink)
+    else:
+        return (False,"none","none","none","none","none","none")
+
+# 添加订阅
+def addSubscribe(groupId,sender,roomId,platform):
+    if platform=="bilibili":
+        if getBilibiliRoomInfo(roomId)[0]:
+            conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+            cur = conn.cursor()
+            try:
+                sql = "insert into subscribe (groupId, memberId, roomId, platform) values (%s,%s,%s,'%s')"%(groupId,sender,roomId,"bilibili")
+                sql = """INSERT INTO subscribe (groupId, memberId, roomId, platform) SELECT
+                    %s,%s,%s,'%s'
+                FROM
+                    DUAL
+                WHERE
+                    NOT EXISTS (
+                        SELECT
+                            roomId, platform
+                        FROM
+                            subscribe
+                        WHERE
+                            memberId = %s
+                        AND  roomId = %s
+                        AND  platform = '%s'
+                        )"""%(groupId,sender,roomId,"bilibili",sender,roomId,"bilibili")
+                cur.execute(sql) 
+                conn.commit()
+                sql = """INSERT INTO subscribeListen (roomId, platform) SELECT
+                    %s, '%s'
+                FROM
+                    DUAL
+                WHERE
+                    NOT EXISTS (
+                        SELECT
+                            roomId, platform
+                        FROM
+                            subscribeListen
+                        WHERE
+                            roomId = %s
+                        AND  platform = '%s')"""%(roomId,"bilibili",roomId,"bilibili")
+                # sql = "insert into subscribeListen (roomId, platform) values (%s,'%s')"%(roomId,"bilibili")
+                cur.execute(sql) 
+                conn.commit()
+            except Exception as e:
+                return [
+                    At(target=sender),
+                    Plain(text="error!%s"%e)
+                ]
+            conn.close()
+            cur.close()
+            return [
+                At(target=sender),
+                Plain(text="\n直播间%s添加成功！"%roomId)
+            ]
+        else:
+            return [
+                At(target=sender),
+                Plain(text="\n直播间号错误！请检查后重新发送！")
+            ]
+
+# 返回网抑云
+def getWyy():
+    response=requests.get(wyySrc)
+    Json=response.json()
+    return [Plain(text=Json[0]["text"])]
+
+# 群平安
+def safe(groupId,memberList):
+    text="%s平安经\n"%getSetting(groupId,"groupName")
+    for i in memberList:
+        text+="%s 平安,\n"%qq2name(memberList,i.id)
+    text=text[:-2]
+    return [Plain(text=text)]
+
+#找到龙王
+def FindDragonKing(groupId,memberList):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql="select * from dragon where groupId=%d order by count desc"%groupId
+    cur.execute(sql) 
+    lspRank = cur.fetchall()
+    conn.close()
+    cur.close()
+    print(lspRank)
+    msg=[]
+    text="啊嘞嘞，从启动到现在都没有人要过涩图的嘛!呜呜呜~\n人家。。。人家好寂寞的，快来找我玩嘛~"
+    if lspRank==():
+        return [Plain(text=text)]
+    else:
+        timeNow = datetime.datetime.now().strftime("%Y-%m-%d")
+        text="今天是%s\n"%timeNow
+        text+="今日获得老色批龙王称号的是：\n"
+        msg.append(Plain(text=text))
+        lspChampionCount=lspRank[0][3]
+        if lspChampionCount==0:
+            text="啊嘞嘞，从启动到现在都没有人要过涩图的嘛!呜呜呜~\n人家。。。人家好寂寞的，快来找我玩嘛~"
+            return [Plain(text=text)]
+        for i in lspRank:
+            if i[3]==lspChampionCount:
+                msg.append(At(target=i[2]))
+                msg.append(Plain(text="\n"))
+            else:
+                break
+        text="让我们恭喜他！\n今日lsp排行榜："
+        msg.append(Plain(text=text))
+        text=""
+        index=0
+        addBool=False
+        add=0
+        last=-1
+        for i in lspRank:
+            if i[3]==0:
+                break
+            if i[3]==last:
+                add+=1
+                addBool=True
+            else:
+                if addBool:
+                    index+=add
+                index+=1
+                add=0
+                addBool=False
+                last=i[3]
+            text+="\n%i.%-20s %3d"%(index,qq2name(memberList,i[2]),i[3])
+        msg.append(Plain(text=text))
+        return msg
+
+# 更新龙王数据
+def updateDragon(groupId,memberId,obj):
+    timeNow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    if obj=="all":
+        sql="update dragon set count=0 where groupId=%d"%groupId
+    else:
+        sql = """INSERT INTO dragon (time, groupId, memberId) SELECT
+                        '%s',%d,%d
+                    FROM
+                        DUAL
+                    WHERE
+                        NOT EXISTS (
+                            SELECT
+                                groupId, memberId
+                            FROM
+                                dragon
+                            WHERE
+                                groupId = %d
+                            AND  memberId = %d
+                            )"""%(timeNow,groupId,memberId,groupId,memberId)
+        cur.execute(sql) 
+        sql="update dragon set count=count+1 where groupId=%d and memberId=%d"%(groupId,memberId)
+    cur.execute(sql) 
+    conn.commit()
+    conn.close()
+    cur.close()
+
+# 获得监听成员列表
+def getListenId(groupIdList):
+    listenId={}
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    for i in groupIdList:
+        listenId[i]=[]
+        sql="select memberId from listen where groupId=%d"%i
+        cur.execute(sql) 
+        data = cur.fetchall()
+        if data==():
+            pass
+        else:
+            for j in data:
+                listenId[i].append(j[0])
+    conn.close()
+    cur.close()
+    return listenId
+    
+# 微博热搜
+def getWeiboHot():
+    response=requests.get(weiboHotSrc)
+    data=response.json()
+    data=data["data"]
+    text="微博实时热榜:"
+    index=0
+    for i in data:
+        index+=1
+        text+="\n%d.%s"%(index,i["word"])
+    text=text.replace("#","")
+    return [Plain(text=text)]
