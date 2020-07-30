@@ -1,5 +1,5 @@
 #coding=utf-8
-from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage
+from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage, LightApp
 import os, random, shutil
 from os.path import join, getsize
 from PIL import Image as IMG
@@ -679,12 +679,97 @@ def showSetting(groupId,sender,check):
             Plain(text=sysInfo)
         ]
     elif check=="group":
-        title=Plain(text="\n-----------setting-----------\n")
-        groupSetting=getGroupAllSetting(groupId)
+        Json="""
+    {
+        "app":"com.tencent.miniapp",
+        "desc":"",
+        "view":"notification",
+        "ver":"0.0.0.1",
+        "prompt":"[群设置]",
+        "appID":"",
+        "sourceName":"",
+        "actionData":"",
+        "actionData_A":"",
+        "sourceUrl":"",
+        "meta":{
+            "notification":{
+                "appInfo":{
+                    "appName":"%d群设置",
+                    "appType":4,
+                    "appid":1109659848,
+                    "iconUrl":"http://gchat.qpic.cn/gchatpic_new/719328335/-2010394141-6383A777BEB79B70B31CE250142D740F/0"
+                },
+                "data":[
+                    {
+                        "title":"复读",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"setu",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"real",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"bizhi",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"r18",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"搜图",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"图片预测",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"图片鉴黄",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"图片闪电",
+                        "value":"%s"
+                    },
+                    {
+                        "title":"数量限制",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"限制数量",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"监听",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"上贡",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"说话模式",
+                        "value":"%s"
+                    }],
+                "title":"纱雾赛高!",
+                "emphasis_keyword":""
+            }
+        },
+        "text":"",
+        "sourceAd":""
+    }"""%(groupId,getSetting(groupId,"repeat"),getSetting(groupId,"setu"),getSetting(groupId,"real"),getSetting(groupId,"bizhi"),getSetting(groupId,"r18"),getSetting(groupId,"search"),getSetting(groupId,"imgPredict"),getSetting(groupId,"yellowPredict"),getSetting(groupId,"imgLightning"),getSetting(groupId,"countLimit"),getSetting(groupId,"limit"),getSetting(groupId,"listen"),getSetting(groupId,"tribute"),getSetting(groupId,"speakMode"))
+        # title=Plain(text="\n-----------setting-----------\n")
+        # groupSetting=getGroupAllSetting(groupId)
         return [
-            At(target=sender),
-            title,
-            groupSetting
+            LightApp(Json)
+            # At(target=sender),
+            # title,
+            # groupSetting
         ]
     else:
         setting=getSetting(groupId,check)
