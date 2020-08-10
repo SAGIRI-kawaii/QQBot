@@ -280,6 +280,8 @@ async def Process(message,groupId,sender,memberList):
 
     # setu功能
     if messageText in setuCallText:
+        if sender==80000000:
+            return [Plain(text="匿名请求已被屏蔽！做涩批就要光明正大！匿名算什么好汉！")]
         updateDragon(groupId,sender,"normal")
         setuCalled=getData("setuCalled")
         setuCalled+=1                               #setuCalled计数  
@@ -345,6 +347,8 @@ async def Process(message,groupId,sender,memberList):
 
     # real功能
     elif messageText=="real":
+        if sender==80000000:
+            return [Plain(text="匿名请求已被屏蔽！做涩批就要光明正大！匿名算什么好汉！")]
         updateDragon(groupId,sender,"normal")
         realCalled=getData("realCalled")
         realCalled+=1                                   #realCalled计数  
@@ -568,7 +572,7 @@ async def Process(message,groupId,sender,memberList):
         Total=float(re.findall(r'Total :(.*?)%',result[5].text)[0])
         if Normal<=55 or Hot>50 or Sexy>50 or Total>20:
             code=getData("searchCount")
-            hammRes=imgSimilarJudge(imgHash("%s%d.png"%(tributeDist,code)),"tribute",10)
+            hammRes=imgSimilarJudge(imgHash("%s%d.png"%(tributeDist,code)),"tribute",3)
             if hammRes[0]:
                 removedFile="%s%d.png"%(tributeDist,code)
                 shutil.move(removedFile,tributeSimilarDist)
@@ -918,6 +922,14 @@ async def Process(message,groupId,sender,memberList):
             print("%s is removed from the blacklist"%qq2name(memberList,target))
             return removeFromBlacklist(target)
 
+    # 添加监听处理
+    elif "[At::target=%i] addListen"%BotQQ in messageText:
+        target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
+        print("add listen:%d in group %d"%(target,groupId))
+        Msg=addListen(groupId,target)
+        Msg.insert(0,"addListen.%d.%d"%(groupId,target))
+        return Msg
+
     # 获取疫情统计
     elif messageText=="疫情" or messageText=="疫情统计":
         return [LightApp(getEpidemic())]
@@ -997,6 +1009,8 @@ async def Process(message,groupId,sender,memberList):
                 elif mode_now=="chat":
                     if not len(messageText.replace("[At::target=%i] "%BotQQ,""))==0:
                         text=getChatText(groupId,sender,str(messageText.replace("[At::target=%i] "%BotQQ,"")))
+                        if text=="":
+                            text="我不知道怎么回答呐~抱歉哦~"
                         record("chat","none",sender,groupId,True,"function")
                     else:
                         return "noneReply"

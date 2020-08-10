@@ -142,6 +142,21 @@ CREATE TABLE `clockchoice` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `dragon`
+--
+
+DROP TABLE IF EXISTS `dragon`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `dragon` (
+  `time` datetime DEFAULT NULL,
+  `groupId` bigint DEFAULT NULL,
+  `memberId` bigint DEFAULT NULL,
+  `count` int DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `frenchjokes`
 --
 
@@ -209,6 +224,19 @@ DROP TABLE IF EXISTS `jokes`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `jokes` (
   `text` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `listen`
+--
+
+DROP TABLE IF EXISTS `listen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `listen` (
+  `groupId` bigint DEFAULT NULL,
+  `memberId` bigint DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -314,6 +342,34 @@ CREATE TABLE `sovietjokes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `subscribe`
+--
+
+DROP TABLE IF EXISTS `subscribe`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subscribe` (
+  `groupId` bigint DEFAULT NULL,
+  `memberId` bigint DEFAULT NULL,
+  `roomId` bigint DEFAULT NULL,
+  `platform` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `subscribelisten`
+--
+
+DROP TABLE IF EXISTS `subscribelisten`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subscribelisten` (
+  `roomId` bigint DEFAULT NULL,
+  `platform` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `tributeready`
 --
 
@@ -366,4 +422,4 @@ CREATE TABLE `yellowpredictready` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-07-23  2:45:20
+-- Dump completed on 2020-08-11  2:23:51

@@ -48,6 +48,7 @@ groupIdList=[]
 @app.subroutine
 async def subroutine1(app: Mirai):
     print("subroutine1 started")
+    global listenId
     start_time=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     groupList = await app.groupList()
     print(groupList)
@@ -64,6 +65,7 @@ async def subroutine1(app: Mirai):
             member_fobidden[j.id]=False
         group_repeat[i.id]={"lastMsg":"","thisMsg":"","stopMsg":""}
     listenId=getListenId(groupIdList)
+    print(listenId)
     # for i in groupList:
     #     await app.sendGroupMessage(i,[
     #         Plain(text="爷来啦~")
@@ -157,18 +159,35 @@ async def dragon(groupIdList):
         if getSetting(i,"setu") or getSetting(i,"real"):
             msg=FindDragonKing(i,MemberList[i])
             updateDragon(i,0,"all")
-            await app.sendGroupMessage(i,msg)
+            try:
+                await app.sendGroupMessage(i,msg)
+            except Exception:
+                pass
         else:
             pass
 
-def func(groupList):
+def func1(groupList):
     print("func")
     loop =  asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(dragon(groupList))
 
-timer = TaskTimer()
-timer.join_task(func, [groupIdList], timing=22.5) # 每天15:30执行
+async def notice(groupIdList):
+    for i in groupIdList:
+        try:
+            await app.sendGroupMessage(i,Plain(text="兄弟萌！0点啦！别忘了防疫打卡鸭!祝你在新的一天有新的好心情哟~"))
+        except Exception:
+            pass
+
+def func2(groupList):
+    print("func")
+    loop =  asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(notice(groupList))
+
+timer = TaskTimer() 
+timer.join_task(func1, [groupIdList], timing=22.5) # 每天22:30执行
+timer.join_task(func2, [groupIdList], timing=0.0) # 每天00:00执行
 timer.start()
 
 @app.receiver("FriendMessage")
@@ -227,8 +246,70 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
     if message.toString()=="test" and sender==HostQQ:
         getListenId(groupIdList)
         # msg=FindDragonKing(groupId,MemberList[groupId])
-        # await app.sendGroupMessage(group,msg)
+        msg=showGithub()
+        await app.sendGroupMessage(group,msg)
 
+    if message.toString()=="test2" and sender==HostQQ:
+        test2="""{
+	"app": "com.tencent.giftmall.giftark",
+	"desc": "",
+	"view": "giftArk",
+	"ver": "1.0.4.1",
+	"prompt": "[礼物]小纱雾酱的博客",
+	"appID": "",
+	"sourceName": "",
+	"actionData": "",
+	"actionData_A": "",
+	"sourceUrl": "",
+	"meta": {
+		"giftData": {
+			"sender": "0",
+			"isFree": "1",
+			"giftName": "纱雾酱的博客",
+			"desc": "小纱雾酱赛高！",
+			"orderNum": "http://mirror.blog.sagiri-web.com",
+			"toUin": "1900384123",
+			"unopenIconUrl": "\/aoi\/sola\/20190402111555_yWazmedH08.png",
+			"openIconUrl": "\/aoi\/sola\/20190505171810_Tq5J6Wtxj8.png",
+			"boxZipUrl": "",
+			"giftZipUrl": "",
+			"giftParticleUrl": "",
+			"msgId": "6725255579486284051"
+		}
+	},
+	"config": {
+		"forward": 0
+	}
+}"""
+        test3="""{
+	"prompt": "[欢迎入群]",
+	"extraApps": [],
+	"sourceUrl": "",
+	"appID": "",
+	"sourceName": "",
+	"desc": "",
+	"app": "com.tencent.qqpay.qqmp.groupmsg",
+	"ver": "1.0.0.7",
+	"view": "groupPushView",
+	"meta": {
+		"groupPushData": {
+			"fromIcon": "",
+			"fromName": "name",
+			"time": "",
+			"report_url": "http:\\/\\/kf.qq.com\\/faq\\/180522RRRVvE180522NzuuYB.html",
+			"cancel_url": "http:\\/\\/www.baidu.com",
+			"summaryTxt": "",
+			"bannerTxt": "欸嘿~欢迎进群呐~进来了就不许走了哦~",
+			"item1Img": "",
+			"bannerLink": "",
+			"bannerImg": "http:\\/\\/gchat.qpic.cn\\/gchatpic_new\\/12904366\\/1046209507-2584598286-E7FCC807BECA2938EBE5D57E7E4980FF\\/0?term=2"
+		}
+	},
+	"actionData": "",
+	"actionData_A": ""
+}"""
+        test4="""{"prompt":"已关机","extraApps":[],"sourceUrl":"","appID":"","sourceName":"","desc":"","app":"com.tencent.qqpay.qqmp.groupmsg","ver":"1.0.0.7","view":"groupPushView","meta":{"groupPushData":{"fromIcon":"","fromName":"name","time":"","report_url":"http:\\/\\/kf.qq.com\\/faq\\/180522RRRVvE180522NzuuYB.html","cancel_url":"http:\\/\\/www.baidu.com","summaryTxt":"靓仔心伤","bannerTxt":"靓仔心伤爱别离大宝贝","item1Img":"","bannerLink":"","bannerImg":"http:\\/\\/gchat.qpic.cn\\/gchatpic_new\\/1796534579\\/1090269581-2846079729-FFB9E9FE88D37B8C73B631B1F0E4846B\\/0?term=2"}},"actionData":"","actionData_A":""}"""
+        await app.sendGroupMessage(group,[LightApp(test3)])
     if message.hasComponent(Image) and getReady(groupId,sender,"searchReady"):
         try:
             await app.sendGroupMessage(group,[
@@ -248,7 +329,7 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
         print("Image saved from group %s!"%group.name)
         record("save img from group",dist,groupId,0,True,"img")
     try:
-        Msg= await Process(message,groupId,sender,MemberList[groupId])
+        Msg = await Process(message,groupId,sender,MemberList[groupId])
         if Msg=="noneReply":
             pass
         elif Msg=="goodNight":
@@ -298,7 +379,8 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
             try:
                 msg = await app.sendGroupMessage(group,Msg,quoteSource=source)
             except exceptions.BotMutedError:
-                NVML_PAGE_RETIREMENT_CAUSE_MULTIPLE_SINGLE_BIT_ECC_ERRORS
+                # NVML_PAGE_RETIREMENT_CAUSE_MULTIPLE_SINGLE_BIT_ECC_ERRORS
+                pass
         elif Msg[0]=="pic*":
             Msg=Msg[1:]
             try:
@@ -306,10 +388,16 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
                     await app.sendGroupMessage(group,[i])
             except exceptions.BotMutedError:
                 pass
+        elif str(type(Msg[0]))=="<class 'str'>" and Msg[0][:10]=="addListen.":
+            _,gid,mid=Msg[0].split(".")
+            if int(mid) not in listenId[int(gid)]:
+                listenId[int(gid)].append(int(mid))
+            Msg=Msg[1:]
+            await app.sendGroupMessage(group,Msg)
         else:
             try:
                 msg = await app.sendGroupMessage(group,Msg)
-                if getSetting(groupId,"r18") and "setu" in message.toString() and type(Msg[0])=="Image":
+                if getSetting(groupId,"r18") and "setu" in message.toString() and str(type(Msg[0]))=="<class 'mirai.image.LocalImage'>":
                     await asyncio.sleep(10)
                     await app.revokeMessage(msg)
             except exceptions.BotMutedError:
@@ -328,6 +416,34 @@ async def member_join(app: Mirai, event: MemberJoinEvent):
                 Plain(text="我是本群小可爱纱雾哟~欢迎呐~一起快活鸭~")
             ]
         )
+        welcome="""{
+	"prompt": "[欢迎入群]",
+	"extraApps": [],
+	"sourceUrl": "",
+	"appID": "",
+	"sourceName": "",
+	"desc": "",
+	"app": "com.tencent.qqpay.qqmp.groupmsg",
+	"ver": "1.0.0.7",
+	"view": "groupPushView",
+	"meta": {
+		"groupPushData": {
+			"fromIcon": "",
+			"fromName": "name",
+			"time": "",
+			"report_url": "http:\\/\\/kf.qq.com\\/faq\\/180522RRRVvE180522NzuuYB.html",
+			"cancel_url": "http:\\/\\/www.baidu.com",
+			"summaryTxt": "",
+			"bannerTxt": "欸嘿~欢迎进群呐~进来了就不许走了哦~",
+			"item1Img": "",
+			"bannerLink": "",
+			"bannerImg": "http:\\/\\/gchat.qpic.cn\\/gchatpic_new\\/12904366\\/1046209507-2584598286-E7FCC807BECA2938EBE5D57E7E4980FF\\/0?term=2"
+		}
+	},
+	"actionData": "",
+	"actionData_A": ""
+}"""
+        await app.sendGroupMessage(event.member.group.id,[LightApp(welcome)])
     except exceptions.BotMutedError:
         pass
 

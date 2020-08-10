@@ -130,7 +130,7 @@ def checkGroupInit(groupList):
             (groupId,groupName,`repeat`,setuLocal,bizhiLocal,countLimit,`limit`,setu,bizhi,`real`,r18,search,imgPredict,yellowPredict,imgLightning,speakMode,switch,forbiddenCount) 
             VALUES 
             (%d,'%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s','%s',0)
-            """%(i.id,i.name,True,True,True,True,6,True,True,True,True,False,True,True,True,"normal","online")
+            """%(i.id,i.name,True,True,True,True,6,True,True,True,False,False,True,True,True,"normal","online")
             cur.execute(sql) 
             sql = """
             INSERT INTO admin 
@@ -763,13 +763,8 @@ def showSetting(groupId,sender,check):
         "text":"",
         "sourceAd":""
     }"""%(groupId,getSetting(groupId,"repeat"),getSetting(groupId,"setu"),getSetting(groupId,"real"),getSetting(groupId,"bizhi"),getSetting(groupId,"r18"),getSetting(groupId,"search"),getSetting(groupId,"imgPredict"),getSetting(groupId,"yellowPredict"),getSetting(groupId,"imgLightning"),getSetting(groupId,"countLimit"),getSetting(groupId,"limit"),getSetting(groupId,"listen"),getSetting(groupId,"tribute"),getSetting(groupId,"speakMode"))
-        # title=Plain(text="\n-----------setting-----------\n")
-        # groupSetting=getGroupAllSetting(groupId)
         return [
             LightApp(Json)
-            # At(target=sender),
-            # title,
-            # groupSetting
         ]
     else:
         setting=getSetting(groupId,check)
@@ -811,6 +806,8 @@ def getMemberPicStatus(groupId,sender):
 def qq2name(memberList,qq):
     if qq==0:
         return "public"
+    elif qq==80000000:
+        return "Anonymous"
     for i in memberList:
         if i.id==qq:
             return i.memberName
@@ -1669,8 +1666,11 @@ def FindDragonKing(groupId,memberList):
             return [Plain(text=text)]
         for i in lspRank:
             if i[3]==lspChampionCount:
-                msg.append(At(target=i[2]))
-                msg.append(Plain(text="\n"))
+                if i[2]!=80000000:
+                    msg.append(At(target=i[2]))
+                    msg.append(Plain(text="\n"))
+                else:
+                    msg.append(Plain(text="@匿名LSP\n"))
             else:
                 break
         text="让我们恭喜他！\n今日lsp排行榜："
@@ -1757,3 +1757,70 @@ def getWeiboHot():
         text+="\n%d.%s"%(index,i["word"])
     text=text.replace("#","")
     return [Plain(text=text)]
+
+# 项目地址
+def showGithub():
+    Json="""
+        {
+            "app":"com.tencent.miniapp",
+            "desc":"",
+            "view":"notification",
+            "ver":"1.0.0.11",
+            "prompt":"项目详情",
+            "appID":"",
+            "sourceName":"",
+            "actionData":"",
+            "actionData_A":"",
+            "sourceUrl":"",
+            "meta":{
+                "notification":{
+                    "appInfo":{
+                        "appName":"QQBot made by SAGIRI",
+                        "appType":4,
+                        "appid":3562842879,
+                        "iconUrl":"https://cdn.u1.huluxia.com/g3/M01/76/EC/wKgBOV3twseAd219AAAa0W_TXxU902.jpg"
+                    },
+                    "button":[
+                        {
+                            "action":"web",
+                            "url":"https://github.com/SAGIRI-kawaii/QQBot",
+                            "name":"项目地址"
+                        },
+                        {
+                            "action":"web",
+                            "url":"https://mirror.blog.sagiri-web.com",
+                            "name":"博客地址"
+                        },
+                        {
+                            "action":"",
+                            "name":"文档地址（暂无）"
+                        }],
+                    "data":[
+                        {
+                            "title":"intro",
+                            "value":"a Mirai-Based QQBot"
+                        }],
+                    "emphasis_keyword":"",
+                    "title":"QQBOT 详情"
+                }
+            }
+        }
+    """
+    return [LightApp(Json)]
+
+# 添加监听
+def addListen(groupId,memberId):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "select memberId from listen where groupId=%d and memberId=%d"%(groupId,memberId)
+    cur.execute(sql) 
+    listen = cur.fetchone()
+    if listen==None:
+        sql = "insert into listen (groupId,memberId) values (%d,%d)"%(groupId,memberId)
+        cur.execute(sql) 
+        conn.commit()
+    else:
+        return [Plain(text="id:%d is already in group:%d's listen list!"%(memberId,groupId))]
+    cur.close()
+    conn.close()
+    return [Plain(text="id:%d add into group:%d's listen list!"%(memberId,groupId))]
