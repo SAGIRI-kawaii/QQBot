@@ -1820,7 +1820,204 @@ def addListen(groupId,memberId):
         cur.execute(sql) 
         conn.commit()
     else:
+        cur.close()
+        conn.close()
         return [Plain(text="id:%d is already in group:%d's listen list!"%(memberId,groupId))]
     cur.close()
     conn.close()
     return [Plain(text="id:%d add into group:%d's listen list!"%(memberId,groupId))]
+
+# 上传个人数据
+def updateUserCalled(groupId,memberId,name,count):
+    sqlKeyWord=["real","at"]
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "select memberId from userCalled where groupId=%d and memberId=%d"%(groupId,memberId)
+    cur.execute(sql) 
+    data = cur.fetchone()
+    if data==None:
+        sql = "insert into userCalled (groupId,memberId) values (%d,%d)"%(groupId,memberId)
+        cur.execute(sql) 
+        conn.commit()
+    if name in sqlKeyWord:
+        name='`'+name+'`'
+    sql = "UPDATE userCalled SET %s=%s+%d WHERE groupId=%d and memberId=%d"%(name,name,count,groupId,memberId)
+    cur.execute(sql) 
+    cur.close()
+    conn.commit()
+    conn.close()
+
+# 上传个人数据
+def getUserCalled(groupId,memberId,memberList):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql = "select * from userCalled where groupId=%d and memberId=%d"%(groupId,memberId)
+    cur.execute(sql) 
+    data = cur.fetchall()
+    data=list(chain.from_iterable(data))
+    if data==None:
+        sql = "insert into userCalled (groupId,memberId) values (%d,%d)"%(groupId,memberId)
+        cur.execute(sql) 
+        conn.commit()
+        cur.close()
+        conn.close()
+        Json="""
+        {
+            "app":"com.tencent.miniapp",
+            "desc":"",
+            "view":"notification",
+            "ver":"0.0.0.1",
+            "prompt":"[个人调用数据]",
+            "appID":"",
+            "sourceName":"",
+            "actionData":"",
+            "actionData_A":"",
+            "sourceUrl":"",
+            "meta":{
+                "notification":{
+                    "appInfo":{
+                        "appName":"%s调用信息",
+                        "appType":4,
+                        "appid":1109659848,
+                        "iconUrl":"http://gchat.qpic.cn/gchatpic_new/719328335/-2010394141-6383A777BEB79B70B31CE250142D740F/0"
+                    },
+                    "data":[
+                        {
+                            "title":"setu",
+                            "value":"0"
+                        },
+                        {
+                            "title":"real",
+                            "value":"0"
+                        },
+                        {
+                            "title":"bizhi",
+                            "value":"0"
+                        },
+                        {
+                            "title":"Atbot",
+                            "value":"1"
+                        },
+                        {
+                            "title":"搜图",
+                            "value":"0"
+                        },
+                        {
+                            "title":"图片预测",
+                            "value":"0"
+                        },
+                        {
+                            "title":"图片鉴黄",
+                            "value":"0"
+                        }],
+                    "title":"调用数据",
+                    "emphasis_keyword":""
+                }
+            },
+            "text":"",
+            "sourceAd":""
+        }"""
+        return [LightApp(Json)]
+    Json="""
+    {
+        "app":"com.tencent.miniapp",
+        "desc":"",
+        "view":"notification",
+        "ver":"0.0.0.1",
+        "prompt":"[个人调用数据]",
+        "appID":"",
+        "sourceName":"",
+        "actionData":"",
+        "actionData_A":"",
+        "sourceUrl":"",
+        "meta":{
+            "notification":{
+                "appInfo":{
+                    "appName":"%s",
+                    "appType":4,
+                    "appid":1109659848,
+                    "iconUrl":"http://gchat.qpic.cn/gchatpic_new/719328335/-2010394141-6383A777BEB79B70B31CE250142D740F/0"
+                },
+                "data":[
+                    {
+                        "title":"setu",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"real",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"bizhi",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"Atbot",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"搜图",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"图片预测",
+                        "value":"%d"
+                    },
+                    {
+                        "title":"图片鉴黄",
+                        "value":"%d"
+                    }],
+                "title":"调用数据",
+                "emphasis_keyword":""
+            }
+        },
+        "text":"",
+        "sourceAd":""
+    }"""%(qq2name(memberList,memberId),data[2],data[3],data[4],data[5],data[6],data[7],data[8])
+    cur.execute(sql) 
+    cur.close()
+    conn.commit()
+    conn.close()
+    return [LightApp(Json)]
+
+# 排名
+def getRank(groupId,memberList):
+    conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
+    cur = conn.cursor()
+    sql="select * from dragon where groupId=%d order by count desc"%groupId
+    cur.execute(sql) 
+    lspRank = cur.fetchall()
+    conn.close()
+    cur.close()
+    print(lspRank)
+    msg=[]
+    text="啊嘞嘞，从启动到现在都没有人要过涩图的嘛!呜呜呜~\n人家。。。人家好寂寞的，快来找我玩嘛~"
+    if lspRank==():
+        return [Plain(text=text)]
+    else:
+        lspChampionCount=lspRank[0][3]
+        if lspChampionCount==0:
+            return [Plain(text=text)]
+        text="目前lsp排行榜："
+        msg.append(Plain(text=text))
+        text=""
+        index=0
+        addBool=False
+        add=0
+        last=-1
+        for i in lspRank:
+            if i[3]==0:
+                break
+            if i[3]==last:
+                add+=1
+                addBool=True
+            else:
+                if addBool:
+                    index+=add
+                index+=1
+                add=0
+                addBool=False
+                last=i[3]
+            text+="\n%i.%-20s %3d"%(index,qq2name(memberList,i[2]),i[3])
+        msg.append(Plain(text=text))
+        return msg

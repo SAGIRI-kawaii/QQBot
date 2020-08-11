@@ -283,6 +283,7 @@ async def Process(message,groupId,sender,memberList):
         if sender==80000000:
             return [Plain(text="匿名请求已被屏蔽！做涩批就要光明正大！匿名算什么好汉！")]
         updateDragon(groupId,sender,"normal")
+        updateUserCalled(groupId,sender,"setu",1)
         setuCalled=getData("setuCalled")
         setuCalled+=1                               #setuCalled计数  
         updateData(setuCalled,"setu")
@@ -350,6 +351,7 @@ async def Process(message,groupId,sender,memberList):
         if sender==80000000:
             return [Plain(text="匿名请求已被屏蔽！做涩批就要光明正大！匿名算什么好汉！")]
         updateDragon(groupId,sender,"normal")
+        updateUserCalled(groupId,sender,"real",1)
         realCalled=getData("realCalled")
         realCalled+=1                                   #realCalled计数  
         updateData(realCalled,"real")
@@ -402,6 +404,7 @@ async def Process(message,groupId,sender,memberList):
         bizhiCalled=getData("bizhiCalled")
         bizhiCalled+=1                                  #bizhiCalled计数  
         updateData(bizhiCalled,"bizhi")
+        updateUserCalled(groupId,sender,"bizhi",1)
 
         if not getSetting(groupId,"bizhi"):                    #本群禁止要bizhi
             record("bizhi","none",sender,groupId,False,"img")
@@ -530,6 +533,7 @@ async def Process(message,groupId,sender,memberList):
         ]
     elif message.hasComponent(Image) and getSetting(groupId,"imgPredict") and getReady(groupId,sender,"predictReady"):
         print("predicting")
+        updateUserCalled(groupId,sender,"imgPredict",1)
         img = message.getFirstComponent(Image)
         return predictImage(groupId,sender,img)
         
@@ -557,6 +561,7 @@ async def Process(message,groupId,sender,memberList):
         ]
     elif message.hasComponent(Image) and getSetting(groupId,"yellowPredict") and getReady(groupId,sender,"yellowPredictReady"):
         print("judging")
+        updateUserCalled(groupId,sender,"yellowPredict",1)
         img = message.getFirstComponent(Image)
         return judgeImageYellow(groupId,sender,img.url,yellowJudgeDist)
     
@@ -698,6 +703,11 @@ async def Process(message,groupId,sender,memberList):
 
     # 开始上贡
     elif messageText=="开始上贡":
+        if not getSetting(groupId,"tribute"):
+            return [
+                At(target=sender),
+                Plain(text="本群未开启上贡功能哦~")
+            ]
         if int(getTributeInfo(sender,"tributeCount"))>=int(getSetting(groupId,"tributeQuantity")):
             setReady(groupId,sender,False,"tributeready")
             return [
@@ -713,6 +723,11 @@ async def Process(message,groupId,sender,memberList):
         
     # 停止上贡
     elif messageText=="停止上贡":
+        if not getSetting(groupId,"tribute"):
+            return [
+                At(target=sender),
+                Plain(text="本群未开启上贡功能哦~")
+            ]
         setReady(groupId,sender,False,"tributeready")
         return [
             At(target=sender),
@@ -763,9 +778,10 @@ async def Process(message,groupId,sender,memberList):
                     Plain(text="看中后直接发送选择表盘+序号即可哦~\n"),
                     Plain(text="再检查下有没有输错呢~\n")
                 ]
-
+    
     # 天气查询功能
     elif "[At::target=%i] 天气"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         weatherCalled=getData("weatherCalled")
         weatherCalled+=1
         updateData(weatherCalled,"weather")
@@ -773,23 +789,37 @@ async def Process(message,groupId,sender,memberList):
 
     # 碧蓝航线wiki查询功能
     elif "[At::target=%i] blhx："%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         name=messageText[28:]
         return blhxWiki(sender,name)
         
     # 营销号生成器
     elif "[At::target=%i] 营销号"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         _,somebody,something,other_word=messageText.split('、')
         # print(something,somebody,other_word)
         return yingxiaohao(somebody,something,other_word)
 
     # 问你点儿事儿
     elif "[At::target=%i] 问你点儿事儿："%BotQQ in message.toString():
+        updateUserCalled(groupId,sender,"at",1)
         question=message.toString()[30:]
         question=parse.quote(question)
         return askSth(sender,question)
 
+    # myInfo功能
+    elif "[At::target=%i] myInfo"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
+        return getUserCalled(groupId,sender,memberList)
+
+    # lspRank功能
+    elif "[At::target=%i] rank"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
+        return getRank(groupId,memberList)
+
     #linux命令查询功能
     elif "[At::target=%i] linux"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         if '：' in messageText:
             messageText=messageText.replace('：',':')
         command=messageText.replace("[At::target=%i] linux:"%BotQQ,"")
@@ -808,6 +838,7 @@ async def Process(message,groupId,sender,memberList):
 
     # 翻译功能
     elif "[At::target=%i] "%BotQQ in messageText and "用" in messageText and "怎么说" in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         supportLanguage={"中文":"zh","英文":"en","日文":"jp","韩文":"kr","法文":"fr","西班牙文":"es","意大利文":"it","德文":"de","土耳其文":"tr","俄文":"ru","葡萄牙文":"pt","越南文":"vi","印度尼西亚文":"id","马来西亚文":"ms","泰文":"th"}
         tp=re.findall(r'\] (.*?)用(.*?)怎么说',messageText,re.S)[0]
         text=tp[0]
@@ -829,6 +860,7 @@ async def Process(message,groupId,sender,memberList):
 
     #设置处理
     elif "[At::target=%i] setting."%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         command=messageText[16:]
         try:
             print(command)
@@ -843,6 +875,7 @@ async def Process(message,groupId,sender,memberList):
     
     # 获取信息处理
     elif "[At::target=%i] info."%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         command=messageText[16:]
         # try:
         print(command)
@@ -852,6 +885,7 @@ async def Process(message,groupId,sender,memberList):
 
     # wiki处理
     elif "[At::target=%i] wiki"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         if '：' in messageText:
             messageText=messageText.replace('：',':')
             print(messageText)
@@ -860,6 +894,7 @@ async def Process(message,groupId,sender,memberList):
         
     # 添加群语录处理 @bot func.addQuote.content.target
     elif "[At::target=%i] func.addQuote."%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         if message.hasComponent(Image):
             try:
                 _,func,target,img=messageText.split(".")
@@ -884,6 +919,7 @@ async def Process(message,groupId,sender,memberList):
 
     # 添加别名处理 @bot func.addQuote.content.target
     elif "[At::target=%i] func.addNickname."%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         try:
             _,func,nickname,target=messageText.split(".")
             return funcProcess(groupId,sender,func,nickname,target,"nickname")
@@ -892,18 +928,21 @@ async def Process(message,groupId,sender,memberList):
 
     # 添加管理员处理
     elif "[At::target=%i] addAdmin"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
         print("add admin:%d in group %d"%(target,groupId))
         return addAdmin(groupId,target)
         
     # 删除管理员处理
     elif "[At::target=%i] deleteAdmin"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
         print("delete admin:%d in group %d"%(target,groupId))
         return deleteAdmin(groupId,target)
 
     # 加入黑名单处理
     elif "[At::target=%i] addBlacklist"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
         if target in blackList:
             return [Plain(text="%s is already in the blacklist")%qq2name(memberList,target)]
@@ -914,6 +953,7 @@ async def Process(message,groupId,sender,memberList):
 
     # 移出黑名单处理
     elif "[At::target=%i] removeBlacklist"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         target=int(re.findall(r'At::target=(.*?)]',messageText[19:],re.S)[0])
         if target not in blackList:
             return [Plain(text="%s is not in the blacklist originally")%qq2name(memberList,target)]
@@ -924,6 +964,7 @@ async def Process(message,groupId,sender,memberList):
 
     # 添加监听处理
     elif "[At::target=%i] addListen"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         target=int(re.findall(r'At::target=(.*?)]',message.toString()[19:],re.S)[0])
         print("add listen:%d in group %d"%(target,groupId))
         Msg=addListen(groupId,target)
@@ -943,7 +984,7 @@ async def Process(message,groupId,sender,memberList):
     elif messageText=="weibo" or messageText=="微博" or messageText=="微博热搜":
         return getWeiboHot()
     
-    # 添加管理员处理
+    # 超度
     elif "超度" in messageText and sender==HostQQ:
         target=int(re.findall(r'\[At::target=(.*?)\]',messageText,re.S)[0])
         return [
@@ -983,6 +1024,7 @@ async def Process(message,groupId,sender,memberList):
 
     # 回复@bot（normal,zuanLow,zuanHigh,rainbow）
     elif "[At::target=%i]"%BotQQ in messageText:
+        updateUserCalled(groupId,sender,"at",1)
         if messageText.replace("[At::target=%d] "%BotQQ,"") in sleepMuteCallText and sender not in getAdmin(groupId):
             return "goodNight"
         elif messageText.replace("[At::target=%d] "%BotQQ,"") in muteAllCallText and sender==HostQQ:

@@ -311,6 +311,7 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
         test4="""{"prompt":"已关机","extraApps":[],"sourceUrl":"","appID":"","sourceName":"","desc":"","app":"com.tencent.qqpay.qqmp.groupmsg","ver":"1.0.0.7","view":"groupPushView","meta":{"groupPushData":{"fromIcon":"","fromName":"name","time":"","report_url":"http:\\/\\/kf.qq.com\\/faq\\/180522RRRVvE180522NzuuYB.html","cancel_url":"http:\\/\\/www.baidu.com","summaryTxt":"靓仔心伤","bannerTxt":"靓仔心伤爱别离大宝贝","item1Img":"","bannerLink":"","bannerImg":"http:\\/\\/gchat.qpic.cn\\/gchatpic_new\\/1796534579\\/1090269581-2846079729-FFB9E9FE88D37B8C73B631B1F0E4846B\\/0?term=2"}},"actionData":"","actionData_A":""}"""
         await app.sendGroupMessage(group,[LightApp(test3)])
     if message.hasComponent(Image) and getReady(groupId,sender,"searchReady"):
+        updateUserCalled(groupId,sender,"search",1)
         try:
             await app.sendGroupMessage(group,[
                 At(target=sender),
