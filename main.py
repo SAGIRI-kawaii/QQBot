@@ -1,5 +1,5 @@
 #coding=utf-8
-from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage,XmlMessage,LightApp,Quote
+from mirai import Mirai, Plain, MessageChain, Friend, Image, Group, protocol, Member, At, Face, JsonMessage,XmlMessage,LightApp,Quote,AtAll
 from mirai import MemberJoinEvent,MemberLeaveEventKick,MemberLeaveEventQuit,MemberSpecialTitleChangeEvent,MemberSpecialTitleChangeEvent,MemberPermissionChangeEvent,MemberMuteEvent,MemberUnmuteEvent,BotJoinGroupEvent,GroupRecallEvent,MemberLeaveEventKick
 from mirai import exceptions
 import BilibiliLiveDanmaku
@@ -156,15 +156,16 @@ async def dragon(groupIdList):
     print("dragon")
     print(groupIdList)
     for i in groupIdList:
-        if getSetting(i,"setu") or getSetting(i,"real"):
-            msg=FindDragonKing(i,MemberList[i])
-            updateDragon(i,0,"all")
-            try:
-                await app.sendGroupMessage(i,msg)
-            except Exception:
+        if i!=696562079:
+            if getSetting(i,"setu") or getSetting(i,"real"):
+                msg=FindDragonKing(i,MemberList[i])
+                updateDragon(i,0,"all")
+                try:
+                    await app.sendGroupMessage(i,msg)
+                except Exception:
+                    pass
+            else:
                 pass
-        else:
-            pass
 
 def func1(groupList):
     print("func")
@@ -172,22 +173,41 @@ def func1(groupList):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(dragon(groupList))
 
-async def notice(groupIdList):
+async def notice(groupIdList,text):
     for i in groupIdList:
-        try:
-            await app.sendGroupMessage(i,Plain(text="兄弟萌！0点啦！别忘了防疫打卡鸭!祝你在新的一天有新的好心情哟~"))
-        except Exception:
-            pass
+        if i!=696562079:
+            try:
+                await app.sendGroupMessage(i,Plain(text=text))
+            except Exception:
+                pass
 
-def func2(groupList):
-    print("func")
+def noticeText(groupList,text):
+    print("noticeText")
     loop =  asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(notice(groupList))
+    loop.run_until_complete(notice(groupList,text))
+
+async def daka(text,groupId):
+    try:
+        await app.sendGroupMessage(groupId,[AtAll(),Plain(text=text)])
+    except Exception as e:
+        print(e)
+
+def dakaFun(text,groupId):
+    print("dakaFun")
+    loop =  asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(daka(text,groupId))
 
 timer = TaskTimer() 
-timer.join_task(func1, [groupIdList], timing=22.5) # 每天22:30执行
-timer.join_task(func2, [groupIdList], timing=0.0) # 每天00:00执行
+timer.join_task(func1, [groupIdList], timing=22.5) # 每天22:30执行 ·
+# timer.join_task(noticeText, [groupIdList,"兄弟姐妹们！17点啦！别忘了防疫体温打卡鸭!"], timing=17.0) # 每天17:00执行
+# timer.join_task(noticeText, [groupIdList,"兄弟姐妹们！21点啦！别忘了防疫每日签到鸭!"], timing=21.0) # 每天21:00执行
+timer.join_task(dakaFun, ["兄弟姐妹们！17:00啦！别忘了防疫体温打卡鸭!",groupId], timing=17.0) # 每天17:00执行
+timer.join_task(dakaFun, ["兄弟姐妹们！21:00啦！别忘了防疫每日签到鸭!",groupId], timing=21.0) # 每天21:00执行
+timer.join_task(dakaFun, ["兄弟姐妹们！17:40啦！防疫体温打卡还有20分钟就结束了鸭!冲冲冲！",groupId], timing=17.6667) # 每天17:40执行
+timer.join_task(dakaFun, ["兄弟姐妹们！21:40啦！防疫每日签到还有20分钟就结束了鸭!冲冲冲！",groupId], timing=21.6667) # 每天21:40执行
+# timer.join_task(dakaFun, ["test 22.25",], timing=22.25) # 每天21:00执行
 timer.start()
 
 @app.receiver("FriendMessage")
@@ -244,9 +264,10 @@ async def GMHandler(app: Mirai, group:Group, message:MessageChain, member:Member
 
 
     if message.toString()=="test" and sender==HostQQ:
-        getListenId(groupIdList)
+        # getListenId(groupIdList)
         # msg=FindDragonKing(groupId,MemberList[groupId])
-        msg=showGithub()
+        # msg=showGithub()
+        msg = getHistoryToday()
         await app.sendGroupMessage(group,msg)
 
     if message.toString()=="test2" and sender==HostQQ:

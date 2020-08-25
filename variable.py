@@ -56,6 +56,7 @@ weatherSrc=getConfig("weatherSrc")             #天气api地址
 virusSrc="https://api.yonyoucloud.com/apis/dst/ncov/country"
 wyySrc="https://api.tzg6.com/api/wyy"
 weiboHotSrc="http://api.weibo.cn/2/guest/search/hot/word"
+historyTodaySrc="https://www.ipip5.com/today/api.php?type=txt"
 
 setuDist="M:\\Pixiv\\pxer_new\\"                                    #setu存储路径
 setu18Dist="M:\\Pixiv\\pxer18_new\\"                                #setuR18存储路径
@@ -411,4 +412,35 @@ chaodu="""
 尔时，飞天神王，及诸天仙众，说是诵毕，稽首天尊，奉辞而退。
 """
 
-test2="""{ "app": "com.tencent.structmsg", "config": { "autosize": true, "ctime": 1596631829, "forward": true, "token": "d966d9c5d0618972e21dd3ce823d17af", "type": "normal" }, "desc": "音乐", "meta": { "music": { "action": "", "android_pkg_name": "", "app_type": 1, "appid": 100497308, "desc": "新乐尘符", "jumpUrl": "https:\/\/i.y.qq.com\/v8\/playsong.html?_wv=1&songid=212628854", "musicUrl": "http:\/\/apd-vlive.apdcdn.tc.qq.com\/amobile.music.tc.qq.com\/C400001vWEfv1jylFu.m4a?guid=1347286464&vkey=6A140668C75CD7D7F996D24E5491A8EDAF9A60F80F13790978A068BE68BA5588875690757D878543711145D397C75562352010A804CA9B83&uin=0&fromtag=38", "preview": "http:\/\/imgcache.qq.com\/music\/photo\/album_500\/28\/500_albumpic_3835228_0.jpg", "sourceMsgId": "0", "source_icon": "", "source_url": "", "tag": "QQ音乐", "title": "123我爱你" } }, "prompt": "[分享]123我爱你", "ver": "0.0.0.1", "view": "music" }"""   
+qqmusic="""
+    {
+        "app": "com.tencent.structmsg",
+        "config": {
+            "autosize": true,
+            "ctime": 1596631829,
+            "forward": true,
+            "token": "d966d9c5d0618972e21dd3ce823d17af",
+            "type": "normal"
+        },
+        "desc": "音乐",
+        "meta": {
+            "music": {
+                "action": "",
+                "android_pkg_name": "",
+                "app_type": 1,
+                "appid": 100497308,
+                "desc": "新乐尘符",
+                "jumpUrl": "https:\/\/i.y.qq.com\/v8\/playsong.html?_wv=1&songid=212628854",
+                "musicUrl": "http:\/\/apd-vlive.apdcdn.tc.qq.com\/amobile.music.tc.qq.com\/C400001vWEfv1jylFu.m4a?guid=1347286464&vkey=6A140668C75CD7D7F996D24E5491A8EDAF9A60F80F13790978A068BE68BA5588875690757D878543711145D397C75562352010A804CA9B83&uin=0&fromtag=38",
+                "preview": "http:\/\/imgcache.qq.com\/music\/photo\/album_500\/28\/500_albumpic_3835228_0.jpg",
+                "sourceMsgId": "0",
+                "source_icon": "",
+                "source_url": "",
+                "tag": "QQ音乐",
+                "title": "123我爱你"
+            }
+        },
+        "prompt": "[分享]123我爱你",
+        "ver": "0.0.0.1",
+        "view": "music"
+    }"""   

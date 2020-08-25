@@ -34,7 +34,7 @@ dbPass = getConfig("dbPass")
 host = getConfig("dbHost")
 user = getConfig("dbUser")
 db = getConfig("dbName")
-settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline"}
+settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline","wyy":"wyy","qq":"qq","off":"off"}
 
 # 初始化city列表
 city=[]
@@ -130,7 +130,7 @@ def checkGroupInit(groupList):
             (groupId,groupName,`repeat`,setuLocal,bizhiLocal,countLimit,`limit`,setu,bizhi,`real`,r18,search,imgPredict,yellowPredict,imgLightning,speakMode,switch,forbiddenCount) 
             VALUES 
             (%d,'%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s','%s',0)
-            """%(i.id,i.name,True,True,True,True,6,True,True,True,False,False,True,True,True,"normal","online")
+            """%(i.id,i.name,True,True,True,True,6,False,False,False,False,False,False,False,False,"normal","online")
             cur.execute(sql) 
             sql = """
             INSERT INTO admin 
@@ -184,7 +184,7 @@ def getSetting(groupId,name):
 
 # 更新本群设置
 def updateSetting(groupId,name,new):
-    strKeyWord=["speakMode","switch"]
+    strKeyWord=["speakMode","switch","music"]
     sqlKeyWord=["repeat","real","limit"]
     conn = pymysql.connect(host=host, user=user, passwd=dbPass, db=db, port=3306, charset="utf8")
     cur = conn.cursor()
@@ -549,21 +549,23 @@ def configChangeJudge(config,change):
     if change not in settingCode:
         return False
     change=settingCode[change]
-    if config=="repeat" and change==True or change==False:
+    if config=="repeat" and (change==True or change==False):
         return True
-    elif (config=="setuLocal" or config=="bizhiLocal") and change==True or change==False:
+    elif (config=="setuLocal" or config=="bizhiLocal") and (change==True or change==False):
         return True
-    elif config=="countLimit" and change==True or change==False:
+    elif config=="countLimit" and (change==True or change==False):
         return True
-    elif config=="tribute" and change==True or change==False:
+    elif config=="tribute" and (change==True or change==False):
         return True
-    elif config=="listen" and change==True or change==False:
+    elif config=="listen" and (change==True or change==False):
         return True
-    elif (config=="setu" or config=="real" or config=="bizhi" or config=="r18" or config=="search" or config=="imgPredict" or config=="imgLightning") and change==True or change==False:
+    elif config=="music" and (change=="wyy" or change=="qq" or change=="off"):
         return True
-    elif config=="speakMode" and change=="normal" or change=="zuanHigh" or change=="zuanLow" or change=="rainbow" or change=="chat":
+    elif (config=="setu" or config=="real" or config=="bizhi" or config=="r18" or config=="search" or config=="imgPredict" or config=="imgLightning") and (change==True or change==False):
         return True
-    elif config=="switch" and change=="online" or change=="offline":
+    elif config=="speakMode" and (change=="normal" or change=="zuanHigh" or change=="zuanLow" or change=="rainbow" or change=="chat"):
+        return True
+    elif config=="switch" and (change=="online" or change=="offline"):
         return True
     return False
 
@@ -1966,6 +1968,10 @@ def getUserCalled(groupId,memberId,memberList):
                     {
                         "title":"图片鉴黄",
                         "value":"%d"
+                    },
+                    {
+                        "title":"点歌",
+                        "value":"%d"
                     }],
                 "title":"调用数据",
                 "emphasis_keyword":""
@@ -1973,7 +1979,7 @@ def getUserCalled(groupId,memberId,memberList):
         },
         "text":"",
         "sourceAd":""
-    }"""%(qq2name(memberList,memberId),data[2],data[3],data[4],data[5],data[6],data[7],data[8])
+    }"""%(qq2name(memberList,memberId),data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9])
     cur.execute(sql) 
     cur.close()
     conn.commit()
@@ -2021,3 +2027,14 @@ def getRank(groupId,memberList):
             text+="\n%i.%-20s %3d"%(index,qq2name(memberList,i[2]),i[3])
         msg.append(Plain(text=text))
         return msg
+
+# 历史上的今天
+def getHistoryToday():
+    response=requests.get(historyTodaySrc)
+    text=response.text
+    text=text.split('\n')
+    text=text[:-1]
+    txt=''
+    for i in text:
+        txt+='%s\n'%i
+    return [Plain(text=txt)]

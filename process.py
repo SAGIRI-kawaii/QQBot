@@ -13,7 +13,7 @@ import shutil
 adminConfig=["repeat","setu","bizhi","real","speakMode","search"]
 adminCheck=["group","speakMode","countLimit","setu","bizhi","real","r18","search"]
 hostConfig=["countLimit","r18","switch"]
-settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline"}
+settingCode={"Disable":0,"Enable":1,"on":1,"off":0,"Local":1,"Net":0,"normal":"normal","zuanLow":"zuanLow","zuanHigh":"zuanHigh","rainbow":"rainbow","chat":"chat","online":"online","offline":"offline","wyy":"wyy","qq":"qq","off":"off"}
 sleepMuteCallText=["精致睡眠","晚安","晚安，精致睡眠"]
 muteAllCallText=["万籁俱寂"]
 unmuteAllCallText=["春回大地","万物复苏"]
@@ -478,7 +478,7 @@ async def Process(message,groupId,sender,memberList):
                     return [Plain(text="只有主人和管理员可以使用%s*num命令哦~你没有权限的呐~"%aim)]
                 else:
                     record("%s*%d"%(aim,num),"none",sender,groupId,False,"img")
-                    return [Plain(text="老色批，要那么多，给你🐎一拳，爬！")]
+                    return [Plain(text="不是管理员你要你🐎呢？老色批！还要那么多？给你🐎一拳，给爷爬！")]
             except ValueError:
                 return [Plain(text="命令错误！%s*后必须跟数字！"%aim)]
 
@@ -701,6 +701,10 @@ async def Process(message,groupId,sender,memberList):
     elif messageText=="平安":
         return safe(groupId,memberList)
 
+    # 历史上的今天
+    elif messageText=="历史上的今天":
+        return getHistoryToday()
+
     # 开始上贡
     elif messageText=="开始上贡":
         if not getSetting(groupId,"tribute"):
@@ -817,7 +821,7 @@ async def Process(message,groupId,sender,memberList):
         updateUserCalled(groupId,sender,"at",1)
         return getRank(groupId,memberList)
 
-    #linux命令查询功能
+    # linux命令查询功能
     elif "[At::target=%i] linux"%BotQQ in messageText:
         updateUserCalled(groupId,sender,"at",1)
         if '：' in messageText:
@@ -858,7 +862,7 @@ async def Process(message,groupId,sender,memberList):
         # print(target)
         return translate(groupId,sender,text,source,target)
 
-    #设置处理
+    # 设置处理
     elif "[At::target=%i] setting."%BotQQ in messageText:
         updateUserCalled(groupId,sender,"at",1)
         command=messageText[16:]
@@ -977,8 +981,15 @@ async def Process(message,groupId,sender,memberList):
         
     # 点歌
     elif messageText[:3]=="点歌 ":
-        target=messageText[3:]
-        return [LightApp(songOrder(target))]
+        if getSetting(groupId,"music")!="off":
+            target=messageText[3:]
+            updateUserCalled(groupId,sender,"songOrder",1)
+            return [LightApp(songOrder(target))]
+        else:
+            return [
+                At(target=sender),
+                Plain(text="点歌功能关闭了呐~想要打开就去找主人吧~")
+            ]
 
     # 微博热搜
     elif messageText=="weibo" or messageText=="微博" or messageText=="微博热搜":
